@@ -57,8 +57,7 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 	protected final URL                  url;
 	private final FrameAccess            frameAccess;
 	private final BlockingQueue<float[]> audioData = new LinkedBlockingQueue<>();
-
-	long samples;
+	long                                 samples;
 
 	public URLVideoSource(URL url) throws IOException {
 		this(url, Integer.MAX_VALUE);
@@ -67,7 +66,7 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 	public URLVideoSource(URL url, int numPlays) throws IOException {
 		this.url      = url;
 		try {
-			frameAccess       = isStillImage(url) ? new FrameAccess(this) : USE_JCODEC ? new JCodecAccess(this, numPlays) : new XuggleAccess(this, numPlays);
+			frameAccess = isStillImage(url) ? new FrameAccess(this) : USE_JCODEC ? new JCodecAccess(this, numPlays) : new XuggleAccess(this, numPlays);
 			width       = frameAccess.getWidth();
 			height      = frameAccess.getHeight();
 			frameRate   = frameAccess.getFrameRate();
@@ -152,5 +151,9 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 				throw new RenderCommandException(t);
 			}
 		}
+	}
+
+	public double getPlayoutTimeInSec() {
+		return frameAccess.getPlayOutTimeInSec();
 	}
 }

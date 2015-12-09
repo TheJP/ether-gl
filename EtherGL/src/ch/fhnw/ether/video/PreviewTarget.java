@@ -30,6 +30,10 @@ public class PreviewTarget extends AbstractVideoTarget {
 		this(width, height, 0, AbstractFrameSource.LENGTH_UNKNOWN);
 	}
 
+	public PreviewTarget(int width, int height, double lengthInSeconds) {
+		this(width, height, -1, lengthInSeconds);
+	}
+
 	public PreviewTarget(int width, int height, double startInSeconds, double lengthInSeconds) {
 		super(Thread.MIN_PRIORITY, AbstractVideoFX.FRAMEFX, false);
 		preview = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -47,6 +51,12 @@ public class PreviewTarget extends AbstractVideoTarget {
 			length = getVideoSource().getLengthInSeconds();
 		if(init) {
 			init      = false;
+			if(start == -1) {
+				if(getVideoSource() instanceof URLVideoSource)
+					start = ((URLVideoSource)getVideoSource()).getPlayoutTimeInSec();
+				else
+					start = 0;
+			}
 			frame     = getFrame().getFrame();
 			prvHeight = preview.getHeight();
 			prvWidth  = (prvHeight * frame.width) / frame.height; 
@@ -75,7 +85,7 @@ public class PreviewTarget extends AbstractVideoTarget {
 		}
 		return previewf;
 	}
-	
+
 	@Override
 	public double getTime() {
 		if(timebase != null) return timebase.getTime();
