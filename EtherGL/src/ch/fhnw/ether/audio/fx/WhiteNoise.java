@@ -39,19 +39,25 @@ import ch.fhnw.util.math.MathUtilities;
 
 public class WhiteNoise extends AbstractRenderCommand<IAudioRenderTarget> {
 	private static final Parameter GAIN = new Parameter("gain", "Gain", 0, 1, 0);
-	private static final Random    RND  = new Random();
+	
+	private final Random rnd;
 	
 	public WhiteNoise() {
-		super(GAIN);
+		this(new Random());
 	}
-		
+
+	public WhiteNoise(Random random) {
+		super(GAIN);
+		rnd = random;
+	}
+
 	@Override
 	protected void run(final IAudioRenderTarget target) throws RenderCommandException {
 		final double  gain    = getVal(GAIN);
 		final float[] samples = target.getFrame().samples;
 		
 		for(int i = 0 ; i < samples.length ; i++)
-			samples[i] += MathUtilities.clamp(((RND.nextFloat() * 2f) - 1f) * gain, -1, 1);
+			samples[i] += MathUtilities.clamp(((rnd.nextFloat() * 2f) - 1f) * gain, -1, 1);
 		
 		target.getFrame().modified();
 	}
