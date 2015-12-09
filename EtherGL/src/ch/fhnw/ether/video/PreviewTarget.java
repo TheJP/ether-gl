@@ -18,7 +18,8 @@ public class PreviewTarget extends AbstractVideoTarget {
 	private       Frame         previewf;
 	private       Graphics2D    g;
 	private       double        length;
-	private       double        start = -1;
+	private       double        start;
+	private       boolean       init = true;
 	private       double        next;
 	private       int           prvN;
 	private       int           prvHeight;
@@ -26,16 +27,17 @@ public class PreviewTarget extends AbstractVideoTarget {
 	private       int           x;
 
 	public PreviewTarget(int width, int height) {
-		this(width, height, AbstractFrameSource.LENGTH_UNKNOWN);
+		this(width, height, 0, AbstractFrameSource.LENGTH_UNKNOWN);
 	}
 
-	public PreviewTarget(int width, int height, double lengthInSeconds) {
+	public PreviewTarget(int width, int height, double startInSeconds, double lengthInSeconds) {
 		super(Thread.MIN_PRIORITY, AbstractVideoFX.FRAMEFX, false);
 		preview = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		g       = (Graphics2D) preview.getGraphics();
 		g.setBackground(new Color(0, true));
 		g.clearRect(0, 0, width, height);
 		length  = lengthInSeconds;
+		start   = startInSeconds;
 	}
 
 	@Override
@@ -43,8 +45,8 @@ public class PreviewTarget extends AbstractVideoTarget {
 		Frame frame = null;
 		if(length == AbstractFrameSource.LENGTH_UNKNOWN) 
 			length = getVideoSource().getLengthInSeconds();
-		if(start  == -1) {                                 
-			start     = getTime();
+		if(init) {
+			init      = false;
 			frame     = getFrame().getFrame();
 			prvHeight = preview.getHeight();
 			prvWidth  = (prvHeight * frame.width) / frame.height; 
@@ -60,7 +62,7 @@ public class PreviewTarget extends AbstractVideoTarget {
 			g.drawImage(ImageScaler.getScaledInstance(frame.toBufferedImage(), prvWidth, prvHeight, RenderingHints.VALUE_INTERPOLATION_BILINEAR, false), x, 0, ImageScaler.AWT_OBSERVER);
 			x += prvWidth + BORDER;
 		}
-		if(getTime() >= length)
+		if(getTime() >= start + length)
 			stop();
 	}
 
@@ -73,4 +75,13 @@ public class PreviewTarget extends AbstractVideoTarget {
 		}
 		return previewf;
 	}
+	
+	@Override
+	public double getTime() {
+		if(timebase != null) return timebase.getTime();
+		if(isRealTime())     return super.getTime();
+		AbstractFrameSource src = program.getFrameSource();
+		return start + (getTotalElapsedFrames() / src.getFrameRate());
+	}
+
 }

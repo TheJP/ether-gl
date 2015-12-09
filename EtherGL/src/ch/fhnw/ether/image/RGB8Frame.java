@@ -54,20 +54,20 @@ public class RGB8Frame extends Frame {
 		init(width, height);
 	}
 
-	public RGB8Frame(int width, int height, ByteBuffer targetBuffer) {
-		this(width, height, targetBuffer, 3);
+	public RGB8Frame(int width, int height, ByteBuffer frameBuffer) {
+		this(width, height, frameBuffer, 3);
 	}
 
-	public RGB8Frame(int width, int height, byte[] targetBuffer) {
-		super(width, height, targetBuffer, 3);
+	public RGB8Frame(int width, int height, byte[] frameBuffer) {
+		super(width, height, frameBuffer, 3);
 	}
 
-	protected RGB8Frame(int width, int height, ByteBuffer targetBuffer, int pixelSize) {
-		super(width, height, targetBuffer, pixelSize);
+	protected RGB8Frame(int width, int height, ByteBuffer frameBuffer, int pixelSize) {
+		super(width, height, frameBuffer, pixelSize);
 	}
 
-	protected RGB8Frame(int width, int height, byte[] targetBuffer, int pixelSize) {
-		super(width, height, targetBuffer, pixelSize);
+	protected RGB8Frame(int width, int height, byte[] frameBuffer, int pixelSize) {
+		super(width, height, frameBuffer, pixelSize);
 	}
 
 	public RGB8Frame(Frame frame) {

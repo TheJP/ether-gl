@@ -57,30 +57,33 @@ import ch.fhnw.ether.media.AbstractFrameSource;
 import ch.fhnw.ether.media.IScheduler;
 import ch.fhnw.ether.media.ITimebase;
 import ch.fhnw.ether.scene.mesh.material.Texture;
+import ch.fhnw.util.BufferUtilities;
 import ch.fhnw.util.Log;
 import ch.fhnw.util.SortedLongMap;
 
 public final class XuggleAccess extends FrameAccess implements Runnable {
 	private static final Log log = Log.create();
 
-	private final IContainer                     container;
-	private       IStreamCoder                   videoCoder;
-	private       IStream                        videoStream;
-	private       IStreamCoder                   audioCoder;
-	private       IStream                        audioStream;
-	private       IVideoResampler                resampler;
-	private       AudioFormat                    audioFormat;
-	private       AtomicReference<Frame>         currentPicture = new AtomicReference<>();
-	private       double                         playOutTime    = ITimebase.ASAP;
-	private       boolean                        isKeyframe;
-	private       long                           lastTimeStamp;
-	private       long                           maxTimeStamp;
-	private       BlockingQueue<float[]>         audioData      = new LinkedBlockingQueue<>();
-	private       double                         baseTime;
-	private       Thread                         decoderThread;
-	private       SortedLongMap<IVideoPicture>   pictureQueue   = new SortedLongMap<>();
-	private       Semaphore                      pictures       = new Semaphore(0);
-	private       Semaphore                      queueSize      = new Semaphore(8);
+	private static final int QUEUE_SZ = 32;
+
+	private final IContainer                      container;
+	private       IStreamCoder                    videoCoder;
+	private       IStream                         videoStream;
+	private       IStreamCoder                    audioCoder;
+	private       IStream                         audioStream;
+	private       IVideoResampler                 resampler;
+	private       AudioFormat                     audioFormat;
+	private       AtomicReference<IVideoPicture>  currentPicture = new AtomicReference<>();
+	private       double                          playOutTime    = ITimebase.ASAP;
+	private       boolean                         isKeyframe;
+	private       long                            lastTimeStamp;
+	private       long                            maxTimeStamp;
+	private       BlockingQueue<float[]>          audioData      = new LinkedBlockingQueue<>();
+	private       double                          baseTime;
+	private       Thread                          decoderThread;
+	private       SortedLongMap<IVideoPicture>    pictureQueue   = new SortedLongMap<>();
+	private       Semaphore                       pictures       = new Semaphore(0);
+	private       Semaphore                       queueSize      = new Semaphore(QUEUE_SZ);
 
 	public XuggleAccess(URLVideoSource src, int numPlays) throws IOException {
 		super(src, numPlays);
@@ -208,37 +211,23 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 
 	@Override
 	public void run() {
-		final IPacket currentPacket = IPacket.make();
 		try {
+			final IPacket currentPacket = IPacket.make();
 			while(container.readNextPacket(currentPacket) >= 0) {
 				if (currentPacket.getStreamIndex() == videoStream.getIndex()) {
-					IVideoPicture currentPicture = IVideoPicture.make(videoCoder.getPixelType(), videoCoder.getWidth(), videoCoder.getHeight());
-					int bytesDecoded = videoCoder.decodeVideo(currentPicture, currentPacket, 0);
+					IVideoPicture picture = IVideoPicture.make(videoCoder.getPixelType(), videoCoder.getWidth(), videoCoder.getHeight());
+					int bytesDecoded = videoCoder.decodeVideo(picture, currentPacket, 0);
 					if (bytesDecoded < 0)
 						break;
-					if (currentPicture.isComplete()) {
+					if (picture.isComplete()) {
 						// terrible hack for fixing up screwed timestamps
-						maxTimeStamp = Math.max(maxTimeStamp, currentPicture.getTimeStamp());
+						maxTimeStamp = Math.max(maxTimeStamp, picture.getTimeStamp());
 						long correction = Math.min((maxTimeStamp - lastTimeStamp) / 2, (long)(IScheduler.SEC2US / getFrameRate()));
-						currentPicture.setTimeStamp(lastTimeStamp + correction);
-						lastTimeStamp = currentPicture.getTimeStamp();
-						IVideoPicture newPic = currentPicture;
-						if (resampler != null) {
-							newPic = IVideoPicture.make(resampler.getOutputPixelFormat(), getWidth(), getHeight());
-							if (resampler.resample(newPic, currentPicture) < 0) {
-								log.warning("could not resample video");
-								break;
-							}
-						}
-						if (newPic.getPixelType() != IPixelFormat.Type.RGB24) {
-							log.warning("could not decode video as RGB24 bit data");
-							break;
-						}
-						final ByteBuffer buffer = newPic.getByteBuffer();
-						flip(buffer, getWidth(), getHeight());
+						picture.setTimeStamp(lastTimeStamp + correction);
+						lastTimeStamp = picture.getTimeStamp();
 						queueSize.acquire();
 						synchronized (pictureQueue) {
-							if(pictureQueue.put(currentPicture.getTimeStamp(), newPic) == null)
+							if(pictureQueue.put(picture.getTimeStamp(), picture) == null)
 								pictures.release();
 							else
 								queueSize.release();
@@ -266,14 +255,15 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 		}
 	}
 
-	private boolean decodeFrame(boolean skip) {
+	@Override
+	public boolean decodeFrame() {
 		try {
 			IVideoPicture picture = null;
 			if(pictures.availablePermits() == 0) {
 				if(decoderThread.isAlive())
 					return false;
 				rewind();
-				decodeFrame(skip);
+				decodeFrame();
 				return numPlays <= 0;
 			}
 			pictures.acquire();
@@ -284,8 +274,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 			}
 			playOutTime = baseTime + (picture.getTimeStamp() / IScheduler.SEC2US);
 			isKeyframe  = picture.isKeyFrame();
-			if(!skip)
-				this.currentPicture.set(new RGB8Frame(getWidth(), getHeight(), picture.getByteBuffer()));
+			this.currentPicture.set(picture);
 			return true;
 		} catch (Throwable t) {
 			return false;
@@ -293,20 +282,34 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	}
 
 	@Override
-	public boolean decodeFrame() {
-		return decodeFrame(false);
-	}
-	
-	@Override
 	protected boolean skipFrame() {
-		return decodeFrame(true);
+		return decodeFrame();
 	}
 
+	IVideoPicture tmpPicture;
 	@Override
 	protected Frame getFrame(BlockingQueue<float[]> audioData) {
 		Frame result = null;
 		try {
-			result = currentPicture.get();
+			final int w = getWidth();
+			final int h = getHeight();
+			IVideoPicture newPic = currentPicture.get();
+			if (resampler != null) {
+				if(tmpPicture == null)
+					tmpPicture = IVideoPicture.make(resampler.getOutputPixelFormat(), w, h); 
+				newPic = tmpPicture;
+				if (resampler.resample(newPic, currentPicture.get()) < 0) {
+					log.warning("could not resample video");
+					return null;
+				}
+			}
+			if (newPic.getPixelType() != IPixelFormat.Type.RGB24) {
+				log.warning("could not decode video as RGB24 bit data");
+				return null;
+			}
+			ByteBuffer dstBuffer = BufferUtilities.createDirectByteBuffer(w * h * 3);
+			flip(newPic.getByteBuffer(), dstBuffer, w, h);
+			result = new RGB8Frame(getWidth(), getHeight(), dstBuffer);
 
 			if(!(this.audioData.isEmpty())) {
 				while(audioData.size() > (2  * this.audioData.size()) + 128)
@@ -321,22 +324,13 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 		return result;
 	}
 
-	private void flip(ByteBuffer buffer, int width, int height) {
+	private void flip(ByteBuffer src, ByteBuffer dst, int width, int height) {
+		dst.clear();
 		final int rowLength = width * 3;
-		byte[] tmp = new byte[rowLength*2];
-		int y0 = 0;
-		int y1 = height - 1;
-		for(int i = height / 2; --i >= 0;) {
-			buffer.position(y0 * rowLength);
-			buffer.get(tmp, 0, rowLength);
-			buffer.position(y1 * rowLength);
-			buffer.get(tmp, rowLength, rowLength);
-
-			buffer.position(y1 * rowLength);
-			buffer.put(tmp, 0, rowLength);
-			buffer.position(y0 * rowLength);
-			buffer.put(tmp, rowLength, rowLength);
-			y0++; y1--;
+		for(int y = height; --y >= 0;) {
+			src.position(y * rowLength);
+			src.limit(y * rowLength + rowLength);
+			dst.put(src);
 		}
 	}
 
@@ -349,7 +343,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	public boolean isKeyframe() {
 		return isKeyframe;
 	}
-	
+
 	@Override
 	public Texture getTexture(BlockingQueue<float[]> audioData) {
 		return getFrame(audioData).getTexture();

@@ -204,7 +204,7 @@ public class RenderProgram<T extends IRenderTarget<?>> extends AbstractRenderCom
 				return (AbstractFrameSource)command;
 		return null;
 	}
-
+	
 	public void setTarget(T target) throws RenderCommandException {
 		if(target != null && this.target.get() != null)
 			throw new RenderCommandException("Cannot replace target '" + this.target + "'  by '" + target + "'");

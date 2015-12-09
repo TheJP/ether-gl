@@ -259,4 +259,8 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 	public final long getRealtiveElapsedFrames() {
 		return relFrames;
 	}
+	
+	public final boolean isRealTime() {
+		return realTime;
+	}
 }
