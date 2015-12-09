@@ -205,10 +205,14 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 		long length = src.getLengthInFrames();
 		if(length > 0 && getRealtiveElapsedFrames() >= length)
 			relFrames = 0;
+		incFrameCount();
+	}
+
+	public void incFrameCount() {
 		totalFrames++;
 		relFrames++;
 	}
-
+	
 	static final class BlockingTimeEvent {
 		public  final double         time;
 		private final CountDownLatch latch = new CountDownLatch(1);

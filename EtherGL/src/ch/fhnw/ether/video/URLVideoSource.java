@@ -39,6 +39,7 @@ import javax.imageio.ImageIO;
 import ch.fhnw.ether.audio.IAudioRenderTarget;
 import ch.fhnw.ether.audio.IAudioSource;
 import ch.fhnw.ether.media.AbstractFrameSource;
+import ch.fhnw.ether.media.AbstractMediaTarget;
 import ch.fhnw.ether.media.IRenderTarget;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.video.jcodec.JCodecAccess;
@@ -130,9 +131,14 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 	@Override
 	protected void run(IRenderTarget<?> target) throws RenderCommandException {
 		if(target instanceof IVideoRenderTarget) {
+			double targetTime;
 			do {
-				frameAccess.decodeFrame();
-			} while(frameAccess.getPlayOutTimeInSec() < target.getTime());
+				targetTime = target.getTime();
+				if(frameAccess.decodeFrame()) {
+					if(frameAccess.getPlayOutTimeInSec() < targetTime && target instanceof AbstractMediaTarget)
+						((AbstractMediaTarget<?,?>)target).incFrameCount();
+				}
+			} while(frameAccess.getPlayOutTimeInSec() < targetTime);
 			VideoFrame frame = new VideoFrame(frameAccess, audioData);
 			if(frameAccess.numPlays <= 0)
 				frame.setLast(true);
