@@ -53,7 +53,8 @@ public class PreviewTarget extends AbstractVideoTarget {
 		} else if(getTime() >= next) {
 			frame     = getFrame().getFrame();
 			next     += (length / prvN);
-		}
+		} else
+			getFrame().skip();
 
 		if(frame != null) {
 			g.drawImage(ImageScaler.getScaledInstance(frame.toBufferedImage(), prvWidth, prvHeight, RenderingHints.VALUE_INTERPOLATION_BILINEAR, false), x, 0, ImageScaler.AWT_OBSERVER);

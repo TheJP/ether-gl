@@ -266,15 +266,14 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 		}
 	}
 
-	@Override
-	public boolean decodeFrame() {
+	private boolean decodeFrame(boolean skip) {
 		try {
 			IVideoPicture picture = null;
 			if(pictures.availablePermits() == 0) {
 				if(decoderThread.isAlive())
 					return false;
 				rewind();
-				decodeFrame();
+				decodeFrame(skip);
 				return numPlays <= 0;
 			}
 			pictures.acquire();
@@ -285,7 +284,8 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 			}
 			playOutTime = baseTime + (picture.getTimeStamp() / IScheduler.SEC2US);
 			isKeyframe  = picture.isKeyFrame();
-			this.currentPicture.set(new RGB8Frame(getWidth(), getHeight(), picture.getByteBuffer()));
+			if(!skip)
+				this.currentPicture.set(new RGB8Frame(getWidth(), getHeight(), picture.getByteBuffer()));
 			return true;
 		} catch (Throwable t) {
 			return false;
@@ -293,8 +293,13 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	}
 
 	@Override
+	public boolean decodeFrame() {
+		return decodeFrame(false);
+	}
+	
+	@Override
 	protected boolean skipFrame() {
-		return decodeFrame();
+		return decodeFrame(true);
 	}
 
 	@Override
