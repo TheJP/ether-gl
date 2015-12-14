@@ -241,4 +241,9 @@ public final class DefaultEventScheduler implements IEventScheduler, ITimebase {
 			}
 		}
 	}
+	
+	@Override
+	public boolean isRealTime() {
+		return timebase == null ? true : timebase.isRealTime();
+	}
 }

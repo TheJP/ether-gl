@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
@@ -59,6 +60,7 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 	private final FrameAccess            frameAccess;
 	private final BlockingQueue<float[]> audioData = new LinkedBlockingQueue<>();
 	long                                 samples;
+	private final AtomicBoolean          startup   = new AtomicBoolean(true);
 
 	public URLVideoSource(URL url) throws IOException {
 		this(url, Integer.MAX_VALUE);
@@ -131,21 +133,25 @@ public class URLVideoSource extends AbstractFrameSource implements IAudioSource,
 	@Override
 	protected void run(IRenderTarget<?> target) throws RenderCommandException {
 		if(target instanceof IVideoRenderTarget) {
-			double targetTime;
-			do {
-				targetTime = target.getTime();
-				if(frameAccess.decodeFrame()) {
-					if(frameAccess.getPlayOutTimeInSec() < targetTime && target instanceof AbstractMediaTarget)
-						((AbstractMediaTarget<?,?>)target).incFrameCount();
-				}
-			} while(frameAccess.getPlayOutTimeInSec() < targetTime);
+			if(target.isRealTime()) {
+				double targetTime;
+				do {
+					targetTime = target.getTime();
+					if(frameAccess.decodeFrame()) {
+						if(frameAccess.getPlayOutTimeInSec() < targetTime && target instanceof AbstractMediaTarget)
+							((AbstractMediaTarget<?,?>)target).incFrameCount();
+					}
+				} while(frameAccess.getPlayOutTimeInSec() < targetTime);
+			} else
+				frameAccess.decodeFrame();
 			VideoFrame frame = new VideoFrame(frameAccess, audioData);
+			startup.set(false);
 			if(frameAccess.numPlays <= 0)
 				frame.setLast(true);
 			((IVideoRenderTarget)target).setFrame(this, frame);
 		} else if(target instanceof IAudioRenderTarget) {
 			try {
-				float[] frameData = audioData.poll();
+				float[] frameData = startup.get() ? audioData.poll() : audioData.take();
 				if(frameData == null) {
 					((IAudioRenderTarget)target).setFrame(this, createAudioFrame(samples, 64));
 					samples += 64;

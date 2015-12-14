@@ -6,5 +6,6 @@ public interface ITimebase {
 	double SEC2US = 1000 * 1000;
 	double SEC2MS = 1000;
 	
-	double getTime();	
+	double  getTime();	
+	boolean isRealTime();
 }

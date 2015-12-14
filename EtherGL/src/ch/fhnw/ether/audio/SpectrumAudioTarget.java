@@ -151,4 +151,9 @@ public class SpectrumAudioTarget implements IAudioRenderTarget {
 	public void setTimebase(ITimebase timebase) {
 		this.timebase = timebase;
 	}
+	
+	@Override
+	public boolean isRealTime() {
+		return timebase == null ? false : timebase.isRealTime(); 
+	}
 }

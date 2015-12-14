@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.sampled.AudioFormat;
@@ -64,7 +65,7 @@ import ch.fhnw.util.SortedLongMap;
 public final class XuggleAccess extends FrameAccess implements Runnable {
 	private static final Log log = Log.create();
 
-	private static final int QUEUE_SZ = 32;
+	private static final int QUEUE_SZ = 8;
 
 	private final IContainer                      container;
 	private       IStreamCoder                    videoCoder;
@@ -150,7 +151,6 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 			if (audioCoder.open() < 0)
 				throw new IOException("could not open audio decoder for container: " + src);
 		}
-
 		decoderThread = new Thread(this, src.getURL().toString());
 		decoderThread.setPriority(Thread.MIN_PRIORITY);
 		decoderThread.setDaemon(true);
@@ -259,14 +259,13 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	public boolean decodeFrame() {
 		try {
 			IVideoPicture picture = null;
-			if(pictures.availablePermits() == 0) {
+			if(!(pictures.tryAcquire(1000, TimeUnit.MILLISECONDS))) {
 				if(decoderThread.isAlive())
 					return false;
 				rewind();
 				decodeFrame();
 				return numPlays <= 0;
 			}
-			pictures.acquire();
 			synchronized (pictureQueue) {
 				picture = pictureQueue.firstValue();
 				pictureQueue.remove(picture.getTimeStamp());

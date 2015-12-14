@@ -264,7 +264,8 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 		return relFrames;
 	}
 	
+	@Override
 	public final boolean isRealTime() {
-		return realTime;
+		return timebase == null ? realTime : timebase.isRealTime();
 	}
 }
