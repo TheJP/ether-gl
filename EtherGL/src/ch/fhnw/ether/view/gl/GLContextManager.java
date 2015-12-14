@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLCapabilitiesImmutable;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawableFactory;
 import com.jogamp.opengl.GLProfile;
@@ -63,8 +64,10 @@ public class GLContextManager {
 		GLContext context;
 
 		TemporaryContext() {
-			GLAutoDrawable drawable = getSharedDrawable();
-			context = drawable.createContext(drawable.getContext());
+			GLCapabilitiesImmutable capabilities = getSharedDrawable().getChosenGLCapabilities();
+			GLAutoDrawable drawable = GLDrawableFactory.getFactory(capabilities.getGLProfile()).createDummyAutoDrawable(null, true, capabilities, null);
+			context = drawable.createContext(getSharedDrawable().getContext());
+			drawable.setContext(context, true);
 		}
 
 		void makeCurrent() {
@@ -148,8 +151,8 @@ public class GLContextManager {
 			if (capabilities == null)
 				capabilities = getCapabilities(IView.INTERACTIVE_VIEW);
 			theSharedDrawable = GLDrawableFactory.getFactory(capabilities.getGLProfile()).createDummyAutoDrawable(null, true, capabilities, null);
+			theSharedDrawable.display();					
 		}
-		theSharedDrawable.display();					
 		return theSharedDrawable;
 	}
 
