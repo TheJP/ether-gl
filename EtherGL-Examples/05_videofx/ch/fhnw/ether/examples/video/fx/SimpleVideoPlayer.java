@@ -57,8 +57,9 @@ import ch.fhnw.util.CollectionUtilities;
 public class SimpleVideoPlayer {
 	public static void main(String[] args) throws MalformedURLException, IOException, RenderCommandException {
 		URLVideoSource track    = new URLVideoSource(new File(args[0]).toURI().toURL());
-		IVideoSource   mask     = args.length > 1 ? new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1)) : null;
+		IVideoSource   mask     = null; 
 		AWTFrameTarget videoOut = new AWTFrameTarget();
+		try {mask = new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1));} catch(Throwable t) {}
 
 		List<AbstractVideoFX> fxs = CollectionUtilities.asList(
 				new RGBGain(),

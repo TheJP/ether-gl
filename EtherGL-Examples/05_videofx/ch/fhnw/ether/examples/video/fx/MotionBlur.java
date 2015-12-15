@@ -29,19 +29,45 @@
 
 package ch.fhnw.ether.examples.video.fx;
 
+import com.jogamp.opengl.GL3;
+
 import ch.fhnw.ether.image.Frame;
+import ch.fhnw.ether.image.RGB8Frame;
 import ch.fhnw.ether.media.Parameter;
 import ch.fhnw.ether.video.IVideoRenderTarget;
+import ch.fhnw.ether.video.VideoFrame;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.video.fx.IVideoFrameFX;
+import ch.fhnw.ether.video.fx.IVideoGLFX;
 
-public class MotionBlur extends AbstractVideoFX implements IVideoFrameFX {
+public class MotionBlur extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
 	private static final Parameter DECAY = new Parameter("decay", "Decay", 0.01f, 1f, 1f);
 
-	private float[][] buffer  = new float[1][1];
+	private static final VideoFrame DUMMY_FRAME = new VideoFrame(new RGB8Frame(1,1));
+	private static final String     PREVIOUS    = "previous";
+	
+	private float[][]    buffer     = new float[1][1];
+	private VideoFrame[] vbuffer    = {DUMMY_FRAME, DUMMY_FRAME};
+	private int          vbufferIdx = 0;
 
 	protected MotionBlur() {
-		super(DECAY);
+		super(
+				NO_UNIFORMS,
+				NO_INOUT,
+				uniforms(PREVIOUS, DUMMY_FRAME),
+				DECAY);
+	}
+
+	@Override
+	public void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target) {
+		vbuffer[vbufferIdx] = target.getFrame();
+		vbufferIdx ^= 1;
+		setUniform(PREVIOUS, vbuffer[vbufferIdx]);
+	}
+
+	@Override
+	public String mainFrag() {
+		return "result = mix(texture(previous,uv),result,decay);";
 	}
 
 	@Override

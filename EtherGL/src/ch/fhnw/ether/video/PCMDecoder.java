@@ -1,4 +1,4 @@
-package ch.fhnw.ether.video.jcodec;
+package ch.fhnw.ether.video;
 
 import java.nio.ByteBuffer;
 

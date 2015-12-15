@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package ch.fhnw.ether.video.jcodec;
+package ch.fhnw.ether.video;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,8 +42,6 @@ import org.jcodec.common.model.Picture8Bit;
 import ch.fhnw.ether.image.Frame;
 import ch.fhnw.ether.image.RGB8Frame;
 import ch.fhnw.ether.scene.mesh.material.Texture;
-import ch.fhnw.ether.video.FrameAccess;
-import ch.fhnw.ether.video.URLVideoSource;
 import ch.fhnw.util.Log;
 
 public final class JCodecAccess extends FrameAccess {

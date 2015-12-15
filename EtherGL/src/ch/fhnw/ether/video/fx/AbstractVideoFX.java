@@ -76,6 +76,7 @@ import ch.fhnw.ether.video.VideoFrame;
 import ch.fhnw.ether.view.gl.GLContextManager;
 import ch.fhnw.ether.view.gl.GLContextManager.IGLContext;
 import ch.fhnw.util.ClassUtilities;
+import ch.fhnw.util.Log;
 import ch.fhnw.util.TextUtilities;
 import ch.fhnw.util.UpdateRequest;
 import ch.fhnw.util.math.IVec3;
@@ -84,8 +85,11 @@ import ch.fhnw.util.math.Mat3;
 import ch.fhnw.util.math.Mat4;
 
 public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRenderTarget> {
+	private static final Log log = Log.create();
+	
 	public static final Class<?>     GLFX        = IVideoGLFX.class;
 	public static final Class<?>     FRAMEFX     = IVideoFrameFX.class;
+	public static final Class<?>[]   FX_CLASSES  = {GLFX, FRAMEFX};
 	public static final Uniform<?>[] NO_UNIFORMS = new Uniform<?>[0];
 	public static final String[]     NO_INOUT    = ClassUtilities.EMPTY_StringA;
 
@@ -102,7 +106,7 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				return "int";
 			else if(value instanceof Boolean)
 				return "bool";
-			else if(value instanceof Frame)
+			else if(value instanceof Frame || value instanceof VideoFrame)
 				return "sampler2D";
 			return TextUtilities.getShortClassName(value).toLowerCase();
 		}
@@ -129,6 +133,8 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				return new Vec4FloatUniform((ITypedAttribute<IVec4>)this, id());
 			else if(value instanceof Frame)
 				return new SamplerUniform(id(), id(), unit, GL3.GL_TEXTURE_2D);
+			else if(value instanceof VideoFrame)
+				return new SamplerUniform(id(), id(), unit, GL3.GL_TEXTURE_2D);
 			else
 				throw new IllegalArgumentException("Unsupported unifrom type:" + value.getClass().getName());
 		}
@@ -141,6 +147,8 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 		public Object get() {
 			if(value instanceof Frame)
 				return ((Frame)value).getTexture();
+			else if(value instanceof VideoFrame)
+				return ((VideoFrame)value).getTexture();
 			return value;
 		}
 	}
@@ -255,6 +263,13 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 			this.material   = new FxMaterial(attrs);
 			this.quad       = new DefaultMesh(material, DefaultGeometry.createVM(Primitive.TRIANGLES, MeshUtilities.DEFAULT_QUAD_TRIANGLES, MeshUtilities.DEFAULT_QUAD_TEX_COORDS));
 			this.renderable = new Renderable(quad, null);
+		} else if(this instanceof IVideoFrameFX) {
+			this.uniformsvert = null;
+			this.outIn        = null;
+			this.uniformsfrag = null;
+			this.material     = null;
+			this.quad         = null;
+			this.renderable   = null;
 		} else {
 			this.uniformsvert = null;
 			this.outIn        = null;
@@ -262,6 +277,8 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 			this.material     = null;
 			this.quad         = null;
 			this.renderable   = null;
+			log.severe("'" + this + "' must implement at least one of " + TextUtilities.toString(FX_CLASSES));
+			System.exit(0);
 		}
 	}
 
@@ -386,6 +403,13 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 		return TextUtilities.cat(lines, '\n');
 	}
 
+	protected static Uniform<?>[] uniforms(Object ...uniforms) {
+		Uniform<?>[] result = new Uniform<?>[uniforms.length / 2];
+		for(int i = 0; i < result.length; i++)
+			result[i] = new Uniform<>(uniforms[i*2].toString(), uniforms[i*2+1]);
+		return result;
+	}
+	
 	private String getVertexCode() {
 		StringBuilder uniformsStr = new StringBuilder();
 		for(Uniform<?> u : uniformsvert)

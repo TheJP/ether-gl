@@ -43,7 +43,6 @@ import ch.fhnw.ether.media.AbstractFrameSource;
 import ch.fhnw.ether.media.AbstractMediaTarget;
 import ch.fhnw.ether.media.IRenderTarget;
 import ch.fhnw.ether.media.RenderCommandException;
-import ch.fhnw.ether.video.jcodec.JCodecAccess;
 import ch.fhnw.util.TextUtilities;
 
 public class URLVideoSource extends AbstractFrameSource implements IAudioSource, IVideoSource {

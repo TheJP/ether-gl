@@ -52,7 +52,7 @@ public class ChromaKey extends AbstractVideoFX implements IVideoFrameFX, IVideoG
 		super(
 				NO_UNIFORMS,
 				NO_INOUT,
-				new Uniform<?>[] {new Uniform<>("mask", mask)},			
+				uniforms("mask", mask),			
 				HUE, RANGE, S_MIN, B_MIN);
 		this.mask = mask;
 	}

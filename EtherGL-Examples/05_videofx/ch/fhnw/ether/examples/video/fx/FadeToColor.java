@@ -49,15 +49,15 @@ public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX, IVide
 	@Override
 	public String mainFrag() {
 		return lines(
-				"result.r = result.r * fade + (1.-fade) * red;",
-				"result.g = result.g * fade + (1.-fade) * green;",
-				"result.b = result.b * fade + (1.-fade) * blue;"
+				"result.r = mix(result.r, red,   fade);",
+				"result.g = mix(result.g, green, fade);",
+				"result.b = mix(result.b, blue,  fade);"
 				);
 	}
 	
 	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
-		final float fade  = getVal(FADE);
+		final float fade = getVal(FADE);
 		final float red  = getVal(RED);
 		final float geen = getVal(GREEN);
 		final float blue = getVal(BLUE);

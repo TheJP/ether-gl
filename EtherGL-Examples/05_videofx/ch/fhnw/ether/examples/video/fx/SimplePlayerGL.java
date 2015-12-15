@@ -80,14 +80,17 @@ public class SimplePlayerGL {
 	public SimplePlayerGL(AbstractFrameSource source, IVideoSource mask) throws RenderCommandException {
 		final IController            controller = new DefaultController(source.getFrameRate());
 		final ColorMapMaterialTarget videoOut   = new ColorMapMaterialTarget(new ColorMapMaterial(), controller, true);
-				
-		List<AbstractVideoFX>        fxs        = CollectionUtilities.asList(
+
+		List<AbstractVideoFX> fxs = CollectionUtilities.asList(
+				new MotionBlur(),
+				new Crosshatch(),
 				new RGBGain(),
+				new RadialBlur(),
 				new FadeToColor(),
 				new Convolution(),
 				new Posterize(),
 				new FakeThermoCam());
-		
+
 		if(mask != null) {
 			RGB8Frame maskOut  = new RGB8Frame(mask.getWidth(), mask.getHeight());
 			maskOut.setTimebase(videoOut);
@@ -111,7 +114,7 @@ public class SimplePlayerGL {
 
 			try {
 				RenderProgram<IVideoRenderTarget> video = new RenderProgram<>((IVideoSource)source, fxs.get(current.get()));
-				
+
 				final JComboBox<AbstractVideoFX> fxsUI = new JComboBox<>();
 				for(AbstractVideoFX fx : fxs)
 					fxsUI.addItem(fx);
@@ -131,7 +134,7 @@ public class SimplePlayerGL {
 					controller.getScheduler().setTimebase(audioOut);
 					audioOut.start();
 				}
-				
+
 				videoOut.start();
 			} catch(Throwable t) {
 				log.severe(t);
@@ -150,7 +153,8 @@ public class SimplePlayerGL {
 				source = new URLVideoSource(new File(args[0]).toURI().toURL());
 			}
 		}
-		IVideoSource mask = args.length > 1 ? new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1)) : null;
+		IVideoSource mask = null; 
+		try {mask = new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1));} catch(Throwable t) {}
 		new SimplePlayerGL(source, mask);
 	}
 }

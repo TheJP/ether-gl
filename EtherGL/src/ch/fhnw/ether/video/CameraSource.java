@@ -91,18 +91,17 @@ public class CameraSource extends AbstractFrameSource implements IVideoSource, I
 	@Override
 	protected void run(IRenderTarget<?> target) throws RenderCommandException {
 		if(!(cam.isOpen())) return;
-		Dimension size  = cam.getViewSize();
-		RGB8Frame frame = new RGB8Frame(size.width, size.height);
+		Dimension size       = cam.getViewSize();
+		RGB8Frame frame      = new RGB8Frame(size.width, size.height);
 		final ByteBuffer src = cam.getImageBytes();
-		src.clear();
 		final ByteBuffer dst = frame.pixels;
-		for(int j = frame.height; --j >= 0;) {
-			dst.position(j * frame.width * 3);
-			for(int i = frame.width; --i >= 0;) {
-				dst.put(src.get());
-				dst.put(src.get());
-				dst.put(src.get());
-			}
+		src.clear();
+		dst.clear();
+		final int rowLength = frame.width * frame.pixelSize;
+		for(int y = frame.height; --y >= 0;) {
+			src.position(y * rowLength);
+			src.limit(y * rowLength + rowLength);
+			dst.put(src);
 		}
 		try {
 			((IVideoRenderTarget)target).setFrame(this, new VideoFrame(frame));

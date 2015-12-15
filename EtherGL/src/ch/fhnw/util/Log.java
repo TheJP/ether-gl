@@ -82,6 +82,10 @@ public class Log implements Serializable {
 		t.printStackTrace(out);
 	}
 	
+	public void severe(String msg) {
+		out.println(format(Level.SEVERE, msg));
+	}
+
 	public void severe(String msg, Throwable t) {
 		out.println(format(Level.SEVERE, msg));
 		t.printStackTrace(out);

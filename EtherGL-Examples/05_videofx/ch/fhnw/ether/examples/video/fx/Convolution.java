@@ -104,11 +104,10 @@ public class Convolution extends AbstractVideoFX implements IVideoFrameFX, IVide
 	}
 
 	public Convolution() {
-		super(NO_UNIFORMS, NO_INOUT,
-				new Uniform<?>[] {
-			new Uniform<>("kernel",    new Mat3()),
-			new Uniform<>("greyscale", Boolean.FALSE)
-		},
+		super(
+				NO_UNIFORMS, 
+				NO_INOUT,
+				uniforms("kernel", new Mat3(),"greyscale", Boolean.FALSE),
 				KERNEL);
 	}
 
