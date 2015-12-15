@@ -363,6 +363,10 @@ public class ParameterWindow {
 				result.setBorder(new TitledBorder(cmd.toString()));
 				Parameter[] params = cmd.getParameters();
 				result.setLayout(new GridBagLayout());
+				addMenuItem(menu, new JCheckBoxMenuItem("Enabled", cmd.isEnabled()), e->{
+					cmd.setEnable(((JCheckBoxMenuItem)e.getSource()).isSelected());
+					setEnablded(result, cmd.isEnabled());
+				});
 				if(params.length > 0) {
 					final ParamUI[] uis = new ParamUI[params.length];
 					for(int i = 0; i < uis.length; i++) {
@@ -379,10 +383,6 @@ public class ParameterWindow {
 						if(uis[i].combo != null)
 							result.add(uis[i].combo, gbc);
 					}
-					addMenuItem(menu, new JCheckBoxMenuItem("Enabled", cmd.isEnabled()), e->{
-						cmd.setEnable(((JCheckBoxMenuItem)e.getSource()).isSelected());
-						setEnablded(result, cmd.isEnabled());
-					});
 					addMenuItem(menu, new JMenuItem("Reset"), e->{for(ParamUI p : uis) p.reset();});
 					addMenuItem(menu, new JMenuItem("Zero"), e->{for(ParamUI p : uis) p.zero();});
 				} else {
@@ -393,6 +393,7 @@ public class ParameterWindow {
 					GridBagConstraints gbc = new GridBagConstraints();
 					gbc.gridwidth = 2;
 					result.add(text, new GridBagConstraints());
+					text.setComponentPopupMenu(menu);
 				}
 				return result;
 			}

@@ -53,7 +53,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 	private   Thread                        framePump;
 	private   long                          totalFrames;
 	private   long                          relFrames;
-	
+
 	protected AbstractMediaTarget(int threadPriority, boolean realTime) {
 		this.priority = threadPriority;
 		this.realTime = realTime;
@@ -97,7 +97,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 
 	@SuppressWarnings("unchecked")
 	protected void runOneCycle() throws RenderCommandException {
-		program.run((T)this);
+		program.runInternal((T)this);
 		final AbstractFrame tmp = getFrame();
 		if(tmp != null) {
 			render();
@@ -173,7 +173,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 				while(isRendering())
 					nap();
 			} else {
-				if(realTime) {
+				if(isRealTime()) {
 					try {
 						int sleep = (int)((time - getTime()) * 1000);
 						if(sleep > 0)
@@ -212,7 +212,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 		totalFrames++;
 		relFrames++;
 	}
-	
+
 	static final class BlockingTimeEvent {
 		public  final double         time;
 		private final CountDownLatch latch = new CountDownLatch(1);
@@ -242,7 +242,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 	public double getTime() {
 		if(timebase != null) return timebase.getTime();
 		if(realTime)
-			return (System.nanoTime() - startTime) / SEC2NS;
+			return startTime == 0 ? 0 : (System.nanoTime() - startTime) / SEC2NS;
 
 		AbstractFrameSource src = program.getFrameSource();
 		long                len = src.getLengthInFrames();
@@ -253,7 +253,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 	public final void setTimebase(ITimebase timebase) {
 		this.timebase = timebase;
 	}
-	
+
 	@Override
 	public final long getTotalElapsedFrames() {
 		return totalFrames;
@@ -263,7 +263,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 	public final long getRealtiveElapsedFrames() {
 		return relFrames;
 	}
-	
+
 	@Override
 	public final boolean isRealTime() {
 		return timebase == null ? realTime : timebase.isRealTime();

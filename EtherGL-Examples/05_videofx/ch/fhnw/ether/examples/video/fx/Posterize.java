@@ -34,8 +34,9 @@ import ch.fhnw.ether.media.Parameter;
 import ch.fhnw.ether.video.IVideoRenderTarget;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.video.fx.IVideoFrameFX;
+import ch.fhnw.ether.video.fx.IVideoGLFX;
 
-public class Posterize extends AbstractVideoFX implements IVideoFrameFX {
+public class Posterize extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
 	private static final Parameter MASK = new Parameter("mask", "Bit Mask", 0, 7, 0);
 
 	public Posterize() {
@@ -43,16 +44,26 @@ public class Posterize extends AbstractVideoFX implements IVideoFrameFX {
 	}
 
 	@Override
+	public String mainFrag() {
+		return lines(
+				"int m = 0xFF << int(mask);",
+				"result.r = (int(255. * result.r) & m) / 255.;",
+				"result.g = (int(255. * result.g) & m) / 255.;",
+				"result.b = (int(255. * result.b) & m) / 255.;"
+				);
+	}
+
+	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
-		final int mask = 0xFF << (int)getVal(MASK);
+		final int m = 0xFF << (int)getVal(MASK);
 
 		if(frame.pixelSize == 4) {
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put((byte)(pixels.get(idx++) & mask));
-					pixels.put((byte)(pixels.get(idx++) & mask));
-					pixels.put((byte)(pixels.get(idx++) & mask));
+					pixels.put((byte)(pixels.get(idx++) & m));
+					pixels.put((byte)(pixels.get(idx++) & m));
+					pixels.put((byte)(pixels.get(idx++) & m));
 					pixels.get();
 					idx++;
 				}
@@ -61,9 +72,9 @@ public class Posterize extends AbstractVideoFX implements IVideoFrameFX {
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put((byte)(pixels.get(idx++) & mask));
-					pixels.put((byte)(pixels.get(idx++) & mask));
-					pixels.put((byte)(pixels.get(idx++) & mask));
+					pixels.put((byte)(pixels.get(idx++) & m));
+					pixels.put((byte)(pixels.get(idx++) & m));
+					pixels.put((byte)(pixels.get(idx++) & m));
 				}
 			});
 		}

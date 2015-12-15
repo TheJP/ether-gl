@@ -48,11 +48,19 @@ public final class ColorMapUniform extends SamplerUniform {
 		this(shaderName, null);
 	}
 
+	public ColorMapUniform(String shaderName, int unit) {
+		this(shaderName, unit, null);
+	}
+
 	public ColorMapUniform(Supplier<Texture> supplier) {
 		this(DEFAULT_SHADER_NAME, supplier);
 	}
 
 	public ColorMapUniform(String shaderName, Supplier<Texture> supplier) {
 		super(IMaterial.COLOR_MAP, shaderName, 0, GL.GL_TEXTURE_2D, supplier);
+	}
+	
+	public ColorMapUniform(String shaderName, int unit, Supplier<Texture> supplier) {
+		super(IMaterial.COLOR_MAP, shaderName, unit, GL.GL_TEXTURE_2D, supplier);
 	}
 }

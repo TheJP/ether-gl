@@ -34,8 +34,9 @@ import ch.fhnw.ether.media.Parameter;
 import ch.fhnw.ether.video.IVideoRenderTarget;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.video.fx.IVideoFrameFX;
+import ch.fhnw.ether.video.fx.IVideoGLFX;
 
-public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX {
+public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
 	private static final Parameter FADE  = new Parameter("fade",  "Fade",  0, 1, 1);
 	private static final Parameter RED   = new Parameter("red",   "Red",   0, 1, 0);
 	private static final Parameter GREEN = new Parameter("green", "Green", 0, 1, 0);
@@ -46,19 +47,28 @@ public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX {
 	}
 
 	@Override
+	public String mainFrag() {
+		return lines(
+				"result.r = result.r * fade + (1.-fade) * red;",
+				"result.g = result.g * fade + (1.-fade) * green;",
+				"result.b = result.b * fade + (1.-fade) * blue;"
+				);
+	}
+	
+	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
-		final float w  = getVal(FADE);
-		final float rs = getVal(RED);
-		final float gs = getVal(GREEN);
-		final float bs = getVal(BLUE);
+		final float fade  = getVal(FADE);
+		final float red  = getVal(RED);
+		final float geen = getVal(GREEN);
+		final float blue = getVal(BLUE);
 
 		if(frame.pixelSize == 4) {
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), rs, w)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), gs, w)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), bs, w)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,  fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), geen, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue, fade)));
 					pixels.get();
 					idx++;
 				}
@@ -67,9 +77,9 @@ public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX {
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), rs, w)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), gs, w)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), bs, w)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,  fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), geen, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue, fade)));
 				}
 			});
 		}

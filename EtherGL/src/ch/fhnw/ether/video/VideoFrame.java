@@ -45,7 +45,11 @@ public class VideoFrame extends AbstractFrame {
 	public VideoFrame(Frame frame) {
 		this(new FrameAccess(frame), null);
 	}
-		
+
+	public VideoFrame(FrameAccess framea) {
+		this(framea, null);
+	}
+	
 	public VideoFrame(FrameAccess framea, BlockingQueue<float[]> audioData) {
 		super(framea.getPlayOutTimeInSec());
 		this.framea    = framea;

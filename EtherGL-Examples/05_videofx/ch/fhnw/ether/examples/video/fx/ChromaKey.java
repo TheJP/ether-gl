@@ -36,10 +36,11 @@ import ch.fhnw.ether.media.Parameter;
 import ch.fhnw.ether.video.IVideoRenderTarget;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.video.fx.IVideoFrameFX;
+import ch.fhnw.ether.video.fx.IVideoGLFX;
 import ch.fhnw.util.color.ColorUtilities;
 
 
-public class ChromaKey extends AbstractVideoFX implements IVideoFrameFX {
+public class ChromaKey extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
 	private static final Parameter HUE    = new Parameter("hue",   "Hue",                0, 1,    0.5f);
 	private static final Parameter RANGE  = new Parameter("range", "Color Range",        0, 0.5f, 0.1f);
 	private static final Parameter S_MIN  = new Parameter("sMin",  "Saturation Minimum", 0, 1,    0.1f);
@@ -48,30 +49,59 @@ public class ChromaKey extends AbstractVideoFX implements IVideoFrameFX {
 	private final Frame mask;
 
 	public ChromaKey(Frame mask) {
-		super(HUE, RANGE, S_MIN, B_MIN);
+		super(
+				NO_UNIFORMS,
+				NO_INOUT,
+				new Uniform<?>[] {new Uniform<>("mask", mask)},			
+				HUE, RANGE, S_MIN, B_MIN);
 		this.mask = mask;
 	}
 
 	@Override
+	public String mainFrag() {
+		return lines(
+				"vec4 maskc = texture(mask,uv);",
+				"vec4 hsba  = rgb2hsb(maskc.r, maskc.g, maskc.b, maskc.a);",
+				"float hh   = wrap(hue + range);",
+				"float hl   = wrap(hue - range);",
+				"if(!(hsba.y > sMin && hsba.z > bMin && hsba.x > hl && hsba.x < hh))",
+				"  result = maskc;"
+				);
+	}
+
+	@Override
+	public String[] functionsFrag() {
+		return new String[] {
+				ColorUtilities.glsl_hsb2rgb(),
+				ColorUtilities.glsl_rgb2hsb(),
+				lines(
+						"float wrap(float v) {",
+						"  int result = int(v * 1000.) % 1000;",
+						"  return (result < 0 ? result + 1000 : result) / 1000.;",
+						"}"
+						)
+		};
+	}
+
+	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
-		final float h  = getVal(HUE);
-		final float r  = getVal(RANGE);
-		final float s  = getVal(S_MIN);
-		final float b  = getVal(B_MIN);
-		final float hh = wrap(h + r);
-		final float hl = wrap(h - r);
+		final float hue   = getVal(HUE);
+		final float range = getVal(RANGE);
+		final float sMin  = getVal(S_MIN);
+		final float bMin  = getVal(B_MIN);
+		final float hh    = wrap(hue + range);
+		final float hl    = wrap(hue - range);
 
 		frame.processLines((pixels, j)->{
 			final float[] hsb = new float[frame.width * 3];
 			final int     pos = pixels.position();
-			ByteBuffer mask = this.mask.pixels.asReadOnlyBuffer();
+			ByteBuffer    mask = this.mask.pixels.asReadOnlyBuffer();
 			mask.position(pos);
 			ColorUtilities.getHSBfromRGB(mask, hsb, this.mask.pixelSize);
 			pixels.position(pos);
 			for(int i = 0; i < frame.width; i++) {
 				int idx = i * 3;
-				if(hsb[idx+1] > s && hsb[idx+2] > b && hsb[idx+0] > hl && hsb[idx+0] < hh) {
-					pixels.get();
+				if(hsb[idx+1] > sMin && hsb[idx+2] > bMin && hsb[idx+0] > hl && hsb[idx+0] < hh) {
 					pixels.get();
 					pixels.get();
 					pixels.get();
@@ -79,7 +109,6 @@ public class ChromaKey extends AbstractVideoFX implements IVideoFrameFX {
 					pixels.put(toByte(this.mask.getFloatComponent(i, j, 0)));
 					pixels.put(toByte(this.mask.getFloatComponent(i, j, 1)));
 					pixels.put(toByte(this.mask.getFloatComponent(i, j, 2)));
-					pixels.put(toByte(this.mask.getFloatComponent(i, j, 3)));
 				}
 			}
 		});

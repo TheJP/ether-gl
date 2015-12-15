@@ -37,37 +37,15 @@ import ch.fhnw.ether.video.fx.IVideoGLFX;
 import ch.fhnw.util.color.ColorUtilities;
 
 public class FakeThermoCam extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
-
 	@Override
 	public String mainFrag() {
 		return "result = hsb2rgb((result.r + result.g + result.b) / 3., 1., 1., 1.)";
 	}
 
 	@Override
-	public String[] functions() {
-		return new String[] {lines(
-				"vec4 hsb2rgb(float h, float s, float v, float a) {",
-				"float c = v * s;",
-				"h = mod((h * 6.0), 6.0);",
-				"float x = c * (1.0 - abs(mod(h, 2.0) - 1.0));",
-				"vec4 color;",
-				"if (0.0 <= h && h < 1.0)",
-				"	color = vec4(c, x, 0.0, a);",
-				"else if (1.0 <= h && h < 2.0)",
-				"	color = vec4(x, c, 0.0, a);",
-				"else if (2.0 <= h && h < 3.0)",
-				"	color = vec4(0.0, c, x, a);",
-				"else if (3.0 <= h && h < 4.0)",
-				"	color = vec4(0.0, x, c, a);",
-				"else if (4.0 <= h && h < 5.0)",
-				"	color = vec4(x, 0.0, c, a);",
-				"else if (5.0 <= h && h < 6.0)",
-				"	color = vec4(c, 0.0, x, a);",
-				"else",
-				"	color = vec4(0.0, 0.0, 0.0, a);",
-				"color.rgb += v - c;",
-				"return color;",
-				"}")
+	public String[] functionsFrag() {
+		return new String[] {
+				ColorUtilities.glsl_hsb2rgb(),
 		};
 	}
 

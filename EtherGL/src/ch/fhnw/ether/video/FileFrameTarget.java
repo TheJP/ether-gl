@@ -49,11 +49,11 @@ public class FileFrameTarget extends AbstractVideoTarget {
 
 	@Override
 	public void render() throws RenderCommandException {
+		sleepUntil(getFrame().playOutTime);
 		try {
 			ImageIO.write(getFrame().getFrame().toBufferedImage(), ext, file);
 		} catch (Throwable e) {
 			throw new RenderCommandException(e);
 		}
-		sleepUntil(getFrame().playOutTime);
 	}
 }

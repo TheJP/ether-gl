@@ -50,6 +50,7 @@ import ch.fhnw.ether.render.variable.base.FloatUniform;
 import ch.fhnw.ether.render.variable.base.IntUniform;
 import ch.fhnw.ether.render.variable.base.Mat3FloatUniform;
 import ch.fhnw.ether.render.variable.base.Mat4FloatUniform;
+import ch.fhnw.ether.render.variable.base.SamplerUniform;
 import ch.fhnw.ether.render.variable.base.Vec3FloatUniform;
 import ch.fhnw.ether.render.variable.base.Vec4FloatUniform;
 import ch.fhnw.ether.render.variable.builtin.ColorMapArray;
@@ -83,8 +84,10 @@ import ch.fhnw.util.math.Mat3;
 import ch.fhnw.util.math.Mat4;
 
 public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRenderTarget> {
-	public static final Class<?> GLFX    = IVideoGLFX.class;
-	public static final Class<?> FRAMEFX = IVideoFrameFX.class;
+	public static final Class<?>     GLFX        = IVideoGLFX.class;
+	public static final Class<?>     FRAMEFX     = IVideoFrameFX.class;
+	public static final Uniform<?>[] NO_UNIFORMS = new Uniform<?>[0];
+	public static final String[]     NO_INOUT    = ClassUtilities.EMPTY_StringA;
 
 	public static final class Uniform<T> extends AbstractAttribute<T> {
 		private T value;
@@ -99,11 +102,17 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				return "int";
 			else if(value instanceof Boolean)
 				return "bool";
+			else if(value instanceof Frame)
+				return "sampler2D";
 			return TextUtilities.getShortClassName(value).toLowerCase();
 		}
 
-		@SuppressWarnings("unchecked")
 		public IShaderUniform<?> toUniform() {
+			return toUniform(-1);
+		}
+		
+		@SuppressWarnings("unchecked")
+		public IShaderUniform<?> toUniform(int unit) {
 			if(value instanceof Boolean)
 				return new BooleanUniform((ITypedAttribute<Boolean>)this, id());
 			else if(value instanceof Float)
@@ -118,7 +127,10 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				return new Vec3FloatUniform((ITypedAttribute<IVec3>)this, id());
 			else if(value instanceof IVec4)
 				return new Vec4FloatUniform((ITypedAttribute<IVec4>)this, id());
-			return null;
+			else if(value instanceof Frame)
+				return new SamplerUniform(id(), id(), unit, GL3.GL_TEXTURE_2D);
+			else
+				throw new IllegalArgumentException("Unsupported unifrom type:" + value.getClass().getName());
 		}
 
 		@SuppressWarnings("unchecked")
@@ -126,12 +138,16 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 			this.value = (T) value;
 		}
 
-		public T get() {
+		public Object get() {
+			if(value instanceof Frame)
+				return ((Frame)value).getTexture();
 			return value;
 		}
 	}
 
 	class FxShader extends AbstractShader {
+		private int unit;
+		
 		public FxShader() {
 			super(FxShader.class, AbstractVideoFX.this.getClass().getName(), getVertexCode(), getFragmentCode(), "", Primitive.TRIANGLES);
 
@@ -143,9 +159,9 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				addUniform(new FloatUniform(params[i].getName(), params[i].getName()));
 			for(Uniform<?> u : uniformsvert)
 				addUniform(u.toUniform());
-			addUniform(new ColorMapUniform());
+			addUniform(new ColorMapUniform("frame", unit++));
 			for(Uniform<?> u : uniformsfrag)
-				addUniform(u.toUniform());
+				addUniform(u.toUniform(unit++));
 		}
 	}
 
@@ -353,8 +369,12 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 	public String mainVert() {
 		return ClassUtilities.EMPTY_String;
 	}
-	
-	public String[] functions() {
+
+	public String[] functionsFrag() {
+		return ClassUtilities.EMPTY_StringA;
+	}
+
+	public String[] functionsVert() {
 		return ClassUtilities.EMPTY_StringA;
 	}
 
@@ -375,6 +395,10 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 		for(String out : outIn)
 			outInStr.append("out ").append(out).append(";\n");
 
+		StringBuilder functionStr = new StringBuilder();
+		for(String function : functionsVert())
+			functionStr.append('\n').append(function).append('\n');
+
 		String main = mainVert();
 		if(main.length() > 0 && !(main.endsWith(";")))
 			main += ";";
@@ -383,11 +407,12 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				"in vec4 vertexPosition;",
 				"in vec2 vertexTexCoord;",
 				uniformsStr.toString(),
-				"out vec2 vsTexCoord;",
+				"out vec2 uv;",
 				outInStr.toString(),
+				functionStr.toString(),
 				"void main() {",
 				main,
-				"  vsTexCoord = vertexTexCoord;",
+				"  uv = vertexTexCoord;",
 				"gl_Position = vertexPosition;",
 				"}");
 	}
@@ -401,9 +426,9 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 		StringBuilder outInStr = new StringBuilder();
 		for(String in : outIn)
 			outInStr.append("in ").append(in).append(";\n");
-		
+
 		StringBuilder functionStr = new StringBuilder();
-		for(String function : functions())
+		for(String function : functionsFrag())
 			functionStr.append('\n').append(function).append('\n');
 
 		String main = mainFrag();
@@ -416,15 +441,15 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 
 		return lines(
 				"#version 330",
-				"uniform sampler2D colorMap;",
-				"in vec2 vsTexCoord;",
+				"uniform sampler2D frame;",
+				"in vec2 uv;",
 				outInStr.toString(),
 				paramStr.toString(),
 				uniformsStr.toString(),
 				"out vec4 result;",
 				functionStr.toString(),
 				"void main() {",
-				"result = texture(colorMap, vsTexCoord);",
+				"result = texture(frame, uv);",
 				main.toString(),
 				"}\n");
 	}

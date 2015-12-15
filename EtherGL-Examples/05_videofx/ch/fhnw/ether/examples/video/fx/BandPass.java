@@ -108,13 +108,13 @@ public class BandPass extends AbstractVideoFX implements IVideoFrameFX {
 			for(int i = frame.width; --i >= 0;) {
 				float re = rj[i*2+0];
 				float im = rj[i*2+1];
-				pixels.put(toByte(Math.sqrt(re * re + im * im)));
+				pixels.put(toByte(Math.hypot(re, im)));
 				re = gj[i*2+0];
 				im = gj[i*2+1];
-				pixels.put(toByte(Math.sqrt(re * re + im * im)));
+				pixels.put(toByte(Math.hypot(re, im)));
 				re = bj[i*2+0];
 				im = bj[i*2+1];
-				pixels.put(toByte(Math.sqrt(re * re + im * im)));
+				pixels.put(toByte(Math.hypot(re, im)));
 				if(frame.pixelSize == 4) pixels.get();
 			}
 		});

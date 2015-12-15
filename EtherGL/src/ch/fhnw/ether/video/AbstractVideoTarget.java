@@ -17,12 +17,12 @@ import ch.fhnw.ether.video.fx.IVideoGLFX;
 
 public abstract class AbstractVideoTarget extends AbstractMediaTarget<VideoFrame, IVideoRenderTarget> implements IVideoRenderTarget, IScheduler {
 	private final Class<?> preferredType;
-	
+
 	protected AbstractVideoTarget(int threadPriority, Class<?> preferredType, boolean realTime) {
 		super(threadPriority, realTime);
 		this.preferredType = preferredType;
 	}
-	
+
 	@Override
 	public void useProgram(RenderProgram<IVideoRenderTarget> program) throws RenderCommandException {
 		AbstractRenderCommand<?>[] cmds = program.getProgram();
@@ -38,6 +38,7 @@ public abstract class AbstractVideoTarget extends AbstractMediaTarget<VideoFrame
 		}
 		if(numGlFx == cmds.length - 1 && preferredType == AbstractVideoFX.GLFX) {}
 		else if(numFrameFx == cmds.length - 1 && preferredType == AbstractVideoFX.FRAMEFX) {}
+		else if(numGlFx == 0 && numFrameFx == 0) {}
 		else
 			throw new IllegalArgumentException("All commands must implement either " + IVideoGLFX.class.getName() + " or " + IVideoFrameFX.class.getName());
 		super.useProgram(program);
@@ -50,13 +51,11 @@ public abstract class AbstractVideoTarget extends AbstractMediaTarget<VideoFrame
 
 	public Texture getSrcTexture(GL3 gl, AbstractVideoFX fx) {
 		AbstractRenderCommand<?>[] cmds = program.getProgram();
-		if(cmds[1] == fx)
-			return getFrame().getTexture();
-
-		for(int i = cmds.length; --i >= 0;)
+		for(int i = cmds.length; --i >= 1;)
 			if(cmds[i] == fx)
-				return getDstTexture(gl, (AbstractVideoFX)cmds[i-1]);
-
+				for(int j = i; --j >= 0;)
+					if(cmds[j].isEnabled())
+						return j == 0 ? getFrame().getTexture() : getDstTexture(gl, (AbstractVideoFX)cmds[j]);
 		return null;
 	}
 
@@ -82,11 +81,5 @@ public abstract class AbstractVideoTarget extends AbstractMediaTarget<VideoFrame
 
 	public Class<?> runAs() {
 		return preferredType;
-	}
-	
-	
-	@Override
-	public double getTime() {
-		return timebase == null ? super.getTime() : timebase.getTime();
 	}
 }

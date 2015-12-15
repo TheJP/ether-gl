@@ -122,10 +122,11 @@ public abstract class Frame extends AbstractVideoTarget {
 		return getClass().getName() + ":" + width + "x" + height;
 	}
 
-	protected void init(int width, int eight) {
-		this.width = width;
-		this.height = eight;
-		int bufsize = width * eight * pixelSize;
+	protected void init(int width, int height) {
+		if(width < 1 || height < 1) throw new IllegalArgumentException("width or height < 1");
+		this.width  = width;
+		this.height = height;
+		int bufsize = width * height * pixelSize;
 		if (this.pixels.capacity() < bufsize)
 			this.pixels = BufferUtilities.createDirectByteBuffer(bufsize);
 	}
@@ -243,7 +244,7 @@ public abstract class Frame extends AbstractVideoTarget {
 		}
 	}
 
-	
+
 	public static Frame toBufferedImage(Icon icon) {
 		BufferedImage img = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics g = img.getGraphics();
@@ -283,6 +284,7 @@ public abstract class Frame extends AbstractVideoTarget {
 		for (int jj = 0; jj < dst.height; jj++) {
 			BufferUtilities.arraycopy(pixels, ((y + jj) * slnsize + x) * pixelSize, dst.pixels, jj * dlnsize * pixelSize, dlnsize * pixelSize);
 		}
+		modified();
 	}
 
 	protected void setSubframeImpl(int x, int y, Frame src) {
@@ -292,9 +294,9 @@ public abstract class Frame extends AbstractVideoTarget {
 			throw new IllegalArgumentException("j(" + y + ")+src.h(" + src.height + ") > h(" + height + ")");
 		int slnsize = src.width;
 		int dlnsize = width;
-		for (int jj = 0; jj < src.height; jj++) {
+		for (int jj = 0; jj < src.height; jj++)
 			BufferUtilities.arraycopy(src.pixels, jj * slnsize * pixelSize, pixels, ((y + jj) * dlnsize + x) * pixelSize, slnsize * pixelSize);
-		}
+		modified();
 	}	
 
 	public static Frame copyTo(Frame src, Frame dst) {
@@ -315,6 +317,7 @@ public abstract class Frame extends AbstractVideoTarget {
 
 	public void modified() {
 		modCount++;
+		texture = null;
 	}
 
 	public int getModCount() {
@@ -509,6 +512,7 @@ public abstract class Frame extends AbstractVideoTarget {
 		} catch(Throwable t) {
 			t.printStackTrace();
 		}
+		modified();
 	}
 
 	public final void position(ByteBuffer pixels, int x, int y) {
@@ -518,21 +522,26 @@ public abstract class Frame extends AbstractVideoTarget {
 	@Override
 	public void render() throws RenderCommandException {
 		VideoFrame vf    = getFrame();
-		Frame      frame = vf.getFrame(); 
-		if(width != frame.width || height != frame.height) {
-			setSubframe(0, 0, ImageScaler.getScaledInstance(frame, width, height, RenderingHints.VALUE_INTERPOLATION_BILINEAR, false));
-		} else
-			setSubframe(0, 0, frame);
+		Frame      frame = vf.getFrame();
+		sleepUntil(vf.playOutTime);
+		synchronized (this) {
+			if(width != frame.width || height != frame.height) {
+				setSubframe(0, 0, ImageScaler.getScaledInstance(frame, width, height, RenderingHints.VALUE_INTERPOLATION_BILINEAR, false));
+			} else {
+				texture = frame.texture;
+				pixels  = frame.pixels;
+			}
+		}
 	}
 
-	public Texture getTexture() {
+	public synchronized Texture getTexture() {
 		if(texture == null) {
 			try(IGLContext ctx = GLContextManager.acquireContext()) {
-				final GL3        gl        = ctx.getGL();
-				texture                    = new Texture(new GLObject(gl, Type.TEXTURE), width, height);
-				final int        target    = GL.GL_TEXTURE_2D;
+				final GL3        gl     = ctx.getGL();
+				texture                 = new Texture(new GLObject(gl, Type.TEXTURE), width, height);
+				final int        target = GL.GL_TEXTURE_2D;
 				gl.glBindTexture(target, texture.getGlObject().getId());
-				pixels.rewind();
+				pixels.clear();
 				loadTexture(gl);
 				gl.glGenerateMipmap(target);
 				gl.glTexParameteri(target, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);

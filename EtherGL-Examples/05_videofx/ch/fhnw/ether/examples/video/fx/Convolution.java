@@ -72,45 +72,21 @@ public class Convolution extends AbstractVideoFX implements IVideoFrameFX, IVide
 	};
 
 	@Override
-	public String mainVert() {
-		return lines(
-				"vec2 widthStep               = vec2(texelWidth, 0.0);",
-				"vec2 heightStep              = vec2(0.0, texelHeight);",
-				"vec2 widthHeightStep         = vec2(texelWidth, texelHeight);",
-				"vec2 widthNegativeHeightStep = vec2(texelWidth, -texelHeight);",
-				
-				"c00 = vertexTexCoord.xy - widthHeightStep;",
-				"c01 = vertexTexCoord.xy - heightStep;",
-				"c02 = vertexTexCoord.xy + widthNegativeHeightStep;",
-				
-				"c10 = vertexTexCoord.xy - widthStep;",
-				"c12 = vertexTexCoord.xy + widthStep;",
-				
-				"c20 = vertexTexCoord.xy - widthNegativeHeightStep;",
-				"c21 = vertexTexCoord.xy + heightStep;",
-				"c22 = vertexTexCoord.xy + widthHeightStep;"
-				);
-	}
-
-	@Override
 	public String mainFrag() {
 		return lines(
-				"vec4 col00 = texture(colorMap, c00);",
-				"vec4 col01 = texture(colorMap, c01);",
-				"vec4 col02 = texture(colorMap, c02);",
-				
-				"vec4 col10 = texture(colorMap, c01);",
-				"vec4 col11 = result;",
-				"vec4 col12 = texture(colorMap, c12);",
-				
-				"vec4 col20 = texture(colorMap, c20);",
-				"vec4 col21 = texture(colorMap, c21);",
-				"vec4 col22 = texture(colorMap, c22);",
-				
-				"result  = col00 * kernel[0][0] + col01 * kernel[0][1] + col02 * kernel[0][2];",
-				"result += col10 * kernel[1][0] + col11 * kernel[1][1] + col12 * kernel[1][2];",
-				"result += col20 * kernel[2][0] + col21 * kernel[2][1] + col22 * kernel[2][2];",
-				
+				"result = ",
+				"textureOffset(frame, uv, ivec2(-1,  1)) * kernel[0][0] +",
+				"textureOffset(frame, uv, ivec2( 0,  1)) * kernel[0][1] +",
+				"textureOffset(frame, uv, ivec2( 1,  1)) * kernel[0][2] +",
+
+				"textureOffset(frame, uv, ivec2(-1,  0)) * kernel[1][0] +",
+				"textureOffset(frame, uv, ivec2( 0,  0)) * kernel[1][1] +",
+				"textureOffset(frame, uv, ivec2( 1,  0)) * kernel[1][2] +",
+
+				"textureOffset(frame, uv, ivec2(-1, -1)) * kernel[2][0] +",
+				"textureOffset(frame, uv, ivec2( 0, -1)) * kernel[2][1] +",
+				"textureOffset(frame, uv, ivec2( 1 ,-1)) * kernel[2][2];",
+
 				"result.a = 1.;",
 				"if(greyscale) {",
 				"	float val = result.r + result.b + result.g;",
@@ -123,27 +99,12 @@ public class Convolution extends AbstractVideoFX implements IVideoFrameFX, IVide
 
 	@Override
 	public void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target) {
-		setUniform("texelWidth",  1f / target.getVideoSource().getWidth());
-		setUniform("texelHeight", 1f / target.getVideoSource().getHeight());
 		setUniform("kernel",      KERNELS[(int) getVal(KERNEL)]);
 		setUniform("greyscale",   Boolean.valueOf(GREYSCALE[(int) getVal(KERNEL)])); 
 	}
 
 	public Convolution() {
-		super(new Uniform<?>[] {
-			new Uniform<>("texelWidth",  Float.valueOf(0)),
-			new Uniform<>("texelHeight", Float.valueOf(0)),
-		},
-				new String[] {
-						"vec2 c00",
-						"vec2 c01",
-						"vec2 c02",
-						"vec2 c10",
-						"vec2 c12",
-						"vec2 c20",
-						"vec2 c21",
-						"vec2 c22",
-		},
+		super(NO_UNIFORMS, NO_INOUT,
 				new Uniform<?>[] {
 			new Uniform<>("kernel",    new Mat3()),
 			new Uniform<>("greyscale", Boolean.FALSE)

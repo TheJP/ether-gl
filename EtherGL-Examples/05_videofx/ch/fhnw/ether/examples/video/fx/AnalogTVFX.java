@@ -80,7 +80,7 @@ public class AnalogTVFX extends AbstractVideoFX implements IVideoFrameFX {
 			for(int i = 3; i < yuv.length; i += 3) {
 				final int    idxY   = (i + hoff) % yuv.length;
 				final int    idxC   = (idxY + c) % yuv.length;
-				final double amplC  = Math.sqrt((yuv[idxC+1] * yuv[idxC+1] + yuv[idxC+2] * yuv[idxC+2])) * a;
+				final double amplC  = Math.hypot(yuv[idxC+1], yuv[idxC+2]) * a;
 				final double phaseC = Math.atan2(yuv[idxC+1], yuv[idxC+2]) + p;
 				yuv[i+0] = yuv[idxY] * y + hd * yuv[i - 3];
 				yuv[i+1] = (float) (Math.sin(phaseC) * amplC);

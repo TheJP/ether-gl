@@ -85,7 +85,9 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	private       SortedLongMap<IVideoPicture>    pictureQueue   = new SortedLongMap<>();
 	private       Semaphore                       pictures       = new Semaphore(0);
 	private       Semaphore                       queueSize      = new Semaphore(QUEUE_SZ);
-
+	private       int                             width;
+	private       int                             height;
+	
 	public XuggleAccess(URLVideoSource src, int numPlays) throws IOException {
 		super(src, numPlays);
 		container = IContainer.make();
@@ -186,12 +188,14 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 
 	@Override
 	public int getWidth() {
-		return videoCoder.getWidth();
+		if(width == 0) width = videoCoder.getWidth();
+		return width;
 	}
 
 	@Override
 	public int getHeight() {
-		return videoCoder.getHeight();
+		if(height == 0) height = videoCoder.getHeight();
+		return height;
 	}
 
 	@Override
@@ -308,7 +312,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 			}
 			ByteBuffer dstBuffer = BufferUtilities.createDirectByteBuffer(w * h * 3);
 			flip(newPic.getByteBuffer(), dstBuffer, w, h);
-			result = new RGB8Frame(getWidth(), getHeight(), dstBuffer);
+			result = new RGB8Frame(w, h, dstBuffer);
 
 			if(!(this.audioData.isEmpty())) {
 				while(audioData.size() > (2  * this.audioData.size()) + 128)

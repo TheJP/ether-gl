@@ -73,4 +73,9 @@ public abstract class AbstractVariable<T> implements IShaderVariable<T> {
 	}
 
 	protected abstract int resolveShaderIndex(GL3 gl, Program program, String shaderName);
+	
+	@Override
+	public String toString() {
+		return id + "(" + shaderName + ")";
+	}
 }

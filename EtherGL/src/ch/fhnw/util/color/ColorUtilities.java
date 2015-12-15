@@ -32,6 +32,7 @@ package ch.fhnw.util.color;
 import java.nio.ByteBuffer;
 
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
+import ch.fhnw.util.TextUtilities;
 
 public final class ColorUtilities {
 	public static final float EPS = 216.f / 24389.f;
@@ -284,5 +285,56 @@ public final class ColorUtilities {
 				pixels.get();
 			idx += 3;
 		}
+	}
+
+	private static String lines(String ... lines) {
+		return TextUtilities.cat(lines, '\n');
+	}
+
+	public static String glsl_hsb2rgb() {
+		return lines(
+				"vec4 hsb2rgb(float h, float s, float v, float a) {",
+				"  float c = v * s;",
+				"  h = mod((h * 6.0), 6.0);",
+				"  float x = c * (1.0 - abs(mod(h, 2.0) - 1.0));",
+				"  vec4 color;",
+				"  if (0.0 <= h && h < 1.0)",
+				"    color = vec4(c, x, 0.0, a);",
+				"  else if (1.0 <= h && h < 2.0)",
+				"    color = vec4(x, c, 0.0, a);",
+				"  else if (2.0 <= h && h < 3.0)",
+				"    color = vec4(0.0, c, x, a);",
+				"  else if (3.0 <= h && h < 4.0)",
+				"    color = vec4(0.0, x, c, a);",
+				"  else if (4.0 <= h && h < 5.0)",
+				"    color = vec4(x, 0.0, c, a);",
+				"  else if (5.0 <= h && h < 6.0)",
+				"    color = vec4(c, 0.0, x, a);",
+				"  else",
+				"    color = vec4(0.0, 0.0, 0.0, a);",
+				"  color.rgb += v - c;",
+				"  return color;",
+				"}");
+	}
+
+	public static String glsl_rgb2hsb() {
+		return lines(
+				"vec4 rgb2hsb(float r, float g, float b, float a) {",
+				"  vec3 rgb = vec3(r,g,b);",
+				"  vec4 hsb = vec4(0., 0., 0., a);",
+			    "  a = min(min(rgb.r, rgb.g), rgb.b);",
+			    "  b = max(max(rgb.r, rgb.g), rgb.b);",
+			    "  float c = b - a;",
+			    "  if (c != 0.0) {",
+			    "    vec3 d = ((vec3(b) - rgb) / 6.0 + c / 2.0) / c;",
+			    "         if (rgb.r == b) hsb.x = d.b - d.g;",
+			    "    else if (rgb.g == b) hsb.x = d.r - d.b + 1.0/3.0;",
+			    "    else if (rgb.b == b) hsb.x = d.g - d.r + 2.0/3.0;",
+			    "    hsb.x = mod(hsb.x, 1.0);",
+			    "    hsb.y = (hsb.z < 0.5)? c / (a+b) : c / (2.0 - c);",
+			    "  }",
+			    "  hsb.z = (a+b) / 2.0;",
+			    "  return hsb;",
+				"}");
 	}
 }

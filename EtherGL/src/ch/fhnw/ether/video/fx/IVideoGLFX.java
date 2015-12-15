@@ -37,6 +37,7 @@ import ch.fhnw.ether.video.IVideoRenderTarget;
 public interface IVideoGLFX extends ICustomMaterial {
 	String       mainVert();
 	String       mainFrag();
-	String[]     functions();
-	void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target);
+	String[]     functionsFrag();
+	String[]     functionsVert();
+	void         processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target);
 }

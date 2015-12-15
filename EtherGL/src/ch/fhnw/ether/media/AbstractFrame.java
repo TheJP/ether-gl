@@ -32,8 +32,8 @@ package ch.fhnw.ether.media;
 import ch.fhnw.util.IDisposable;
 
 public abstract class AbstractFrame implements IDisposable {
-	public final double playOutTime;
-	private boolean     last;
+	public  double  playOutTime;
+	private boolean last;
 	
 	public AbstractFrame(double playOutTime) {
 		this(playOutTime, false);

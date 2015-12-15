@@ -30,6 +30,7 @@
 package ch.fhnw.ether.examples.video.fx;
 
 import ch.fhnw.ether.image.Frame;
+import ch.fhnw.ether.image.RGBA8Frame;
 import ch.fhnw.ether.media.Parameter;
 import ch.fhnw.ether.video.IVideoRenderTarget;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
@@ -49,33 +50,24 @@ public class RGBGain extends AbstractVideoFX implements IVideoFrameFX, IVideoGLF
 	public String mainFrag() {
 		return "result = vec4(result.r * red, result.g * green, result.b * blue, 1)";
 	}
-	
+
 	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
 		final float rs = getVal(RED);
 		final float gs = getVal(GREEN);
 		final float bs = getVal(BLUE);
 
-		if(frame.pixelSize == 4) {
-			frame.processLines((pixels, j)->{
-				int idx = pixels.position();
-				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * rs));
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * gs));
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * bs));
+		frame.processLines((pixels, j)->{
+			int idx = pixels.position();
+			for(int i = 0; i < frame.width; i++) {
+				pixels.put(toByte(toFloat(pixels.get(idx++)) * rs));
+				pixels.put(toByte(toFloat(pixels.get(idx++)) * gs));
+				pixels.put(toByte(toFloat(pixels.get(idx++)) * bs));
+				if(frame instanceof RGBA8Frame) {					
 					pixels.get();
 					idx++;
 				}
-			});
-		} else {
-			frame.processLines((pixels, j)->{
-				int idx = pixels.position();
-				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * rs));
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * gs));
-					pixels.put(toByte(toFloat(pixels.get(idx++)) * bs));
-				}
-			});
-		}
+			}
+		});
 	}
 }

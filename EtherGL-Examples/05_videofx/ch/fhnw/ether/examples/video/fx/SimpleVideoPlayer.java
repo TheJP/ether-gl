@@ -41,12 +41,13 @@ import ch.fhnw.ether.audio.IAudioRenderTarget;
 import ch.fhnw.ether.audio.IAudioSource;
 import ch.fhnw.ether.audio.JavaSoundTarget;
 import ch.fhnw.ether.audio.fx.AudioGain;
-import ch.fhnw.ether.image.RGBA8Frame;
+import ch.fhnw.ether.image.RGB8Frame;
 import ch.fhnw.ether.media.IScheduler;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.media.RenderProgram;
 import ch.fhnw.ether.ui.ParameterWindow;
 import ch.fhnw.ether.video.AWTFrameTarget;
+import ch.fhnw.ether.video.ArrayVideoSource;
 import ch.fhnw.ether.video.IVideoRenderTarget;
 import ch.fhnw.ether.video.IVideoSource;
 import ch.fhnw.ether.video.URLVideoSource;
@@ -56,7 +57,7 @@ import ch.fhnw.util.CollectionUtilities;
 public class SimpleVideoPlayer {
 	public static void main(String[] args) throws MalformedURLException, IOException, RenderCommandException {
 		URLVideoSource track    = new URLVideoSource(new File(args[0]).toURI().toURL());
-		IVideoSource   mask     = args.length > 1 ? new URLVideoSource(new File(args[1]).toURI().toURL()) : null;
+		IVideoSource   mask     = args.length > 1 ? new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1)) : null;
 		AWTFrameTarget videoOut = new AWTFrameTarget();
 
 		List<AbstractVideoFX> fxs = CollectionUtilities.asList(
@@ -72,7 +73,8 @@ public class SimpleVideoPlayer {
 		AtomicInteger current = new AtomicInteger(0);
 
 		if(mask != null) {
-			RGBA8Frame maskOut  = new RGBA8Frame(track.getWidth(), track.getHeight());
+			RGB8Frame maskOut  = new RGB8Frame(track.getWidth(), track.getHeight());
+			maskOut.setTimebase(videoOut);
 			maskOut.useProgram(new RenderProgram<>(mask));
 			fxs.add(new ChromaKey(maskOut));
 			maskOut.start();
