@@ -87,9 +87,9 @@ public class MotionBlur extends AbstractVideoFX implements IVideoFrameFX, IVideo
 				float g = toFloat(pixels.get());
 				float b = toFloat(pixels.get());
 
-				bufferJ[idx] = mix(r, bufferJ[idx], decay); idx++;
-				bufferJ[idx] = mix(g, bufferJ[idx], decay); idx++;
-				bufferJ[idx] = mix(b, bufferJ[idx], decay);
+				bufferJ[idx] = mix(bufferJ[idx], r, decay); idx++;
+				bufferJ[idx] = mix(bufferJ[idx], g, decay); idx++;
+				bufferJ[idx] = mix(bufferJ[idx], b, decay);
 
 				idx -= 2;
 

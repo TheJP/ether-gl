@@ -304,7 +304,7 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 	}
 
 	public static float mix(final float val0, final float val1, float w) {
-		return val0 * w + (1f-w) * val1;
+		return val1 * w + (1f-w) * val0;
 	}
 
 	public void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target) {}

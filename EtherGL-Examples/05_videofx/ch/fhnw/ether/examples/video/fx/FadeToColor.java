@@ -37,7 +37,7 @@ import ch.fhnw.ether.video.fx.IVideoFrameFX;
 import ch.fhnw.ether.video.fx.IVideoGLFX;
 
 public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX, IVideoGLFX {
-	private static final Parameter FADE  = new Parameter("fade",  "Fade",  0, 1, 1);
+	private static final Parameter FADE  = new Parameter("fade",  "Fade",  0, 1, 0);
 	private static final Parameter RED   = new Parameter("red",   "Red",   0, 1, 0);
 	private static final Parameter GREEN = new Parameter("green", "Green", 0, 1, 0);
 	private static final Parameter BLUE  = new Parameter("blue",  "Blue",  0, 1, 0);
@@ -57,18 +57,18 @@ public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX, IVide
 	
 	@Override
 	public void processFrame(final double playOutTime, final IVideoRenderTarget target, final Frame frame) {
-		final float fade = getVal(FADE);
-		final float red  = getVal(RED);
-		final float geen = getVal(GREEN);
-		final float blue = getVal(BLUE);
+		final float fade  = getVal(FADE);
+		final float red   = getVal(RED);
+		final float green = getVal(GREEN);
+		final float blue  = getVal(BLUE);
 
 		if(frame.pixelSize == 4) {
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,  fade)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), geen, fade)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,   fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), green, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue,  fade)));
 					pixels.get();
 					idx++;
 				}
@@ -77,9 +77,9 @@ public class FadeToColor extends AbstractVideoFX implements IVideoFrameFX, IVide
 			frame.processLines((pixels, j)->{
 				int idx = pixels.position();
 				for(int i = 0; i < frame.width; i++) {
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,  fade)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), geen, fade)));
-					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), red,   fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), green, fade)));
+					pixels.put(toByte(mix(toFloat(pixels.get(idx++)), blue,  fade)));
 				}
 			});
 		}
