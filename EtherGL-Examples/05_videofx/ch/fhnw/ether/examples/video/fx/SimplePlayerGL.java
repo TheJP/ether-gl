@@ -109,7 +109,8 @@ public class SimplePlayerGL {
 
 			DefaultGeometry g = DefaultGeometry.createVM(Primitive.TRIANGLES, MeshUtilities.UNIT_CUBE_TRIANGLES, MeshUtilities.UNIT_CUBE_TEX_COORDS); 
 			IMesh mesh = new DefaultMesh(videoOut.getMaterial(), g, Queue.DEPTH);
-			mesh.setTransform(Mat4.trs(0, 0, 0, 0, 0, 0, SCALE * ((IVideoSource)source).getWidth() / ((IVideoSource)source).getHeight(), SCALE, SCALE));			
+			float aspectRatio =  ((IVideoSource)source).getWidth() / (float)((IVideoSource)source).getHeight();
+			mesh.setTransform(Mat4.scale(SCALE * aspectRatio, SCALE * aspectRatio, SCALE));			
 			scene.add3DObject(mesh);
 
 			try {

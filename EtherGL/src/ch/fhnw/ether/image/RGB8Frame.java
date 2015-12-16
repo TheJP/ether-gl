@@ -38,10 +38,10 @@ import java.awt.image.DirectColorModel;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-import ch.fhnw.util.BufferUtilities;
-
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL3;
+
+import ch.fhnw.util.BufferUtilities;
 
 public class RGB8Frame extends Frame {
 
@@ -231,11 +231,11 @@ public class RGB8Frame extends Frame {
 
 	@Override
 	public void setPixels(final int x, final int y, final int w, int h, BufferedImage img, final int flags) {
-		if (img.getType() == BufferedImage.TYPE_CUSTOM || img.getType() == BufferedImage.TYPE_BYTE_BINARY)
-			img = ImageScaler.copy(img, new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB));
 		final ByteBuffer dst = pixels;
 		final int dstll = width * pixelSize;
 		int dstyoff = dstll * ((height - 1) - y);
+		if (img.getType() == BufferedImage.TYPE_CUSTOM || img.getType() == BufferedImage.TYPE_BYTE_BINARY)
+			img = ImageScaler.copy(img, new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB));
 		switch (img.getType()) {
 		case BufferedImage.TYPE_4BYTE_ABGR:
 		case BufferedImage.TYPE_4BYTE_ABGR_PRE: {

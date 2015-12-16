@@ -30,27 +30,32 @@
 package ch.fhnw.ether.video;
 
 import java.awt.Dimension;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamEvent;
+import com.github.sarxos.webcam.WebcamListener;
 
-import ch.fhnw.ether.image.RGB8Frame;
+import ch.fhnw.ether.image.Frame;
 import ch.fhnw.ether.media.AbstractFrameSource;
 import ch.fhnw.ether.media.IRenderTarget;
 import ch.fhnw.ether.media.RenderCommandException;
-import ch.fhnw.util.ClassUtilities;
 import ch.fhnw.util.IDisposable;
+import ch.fhnw.util.Log;
 
-public class CameraSource extends AbstractFrameSource implements IVideoSource, IDisposable {
-	private static final AtomicBoolean kill = new AtomicBoolean();
+public class CameraSource extends AbstractFrameSource implements IVideoSource, IDisposable, WebcamListener {
+	private static final Log log = Log.create();
 
-	private static final Method getFPS = ClassUtilities.getMethod(Webcam.class, "getFPS");
-
-	private final Webcam     cam;
-	private AtomicBoolean    disposed = new AtomicBoolean(false);
-	private final CameraInfo info;
+	private static final AtomicBoolean kill   = new AtomicBoolean();
+	private static final int           Q_SIZE = 3;             
+	
+	private final Webcam                       cam;
+	private AtomicBoolean                      disposed = new AtomicBoolean(false);
+	private final CameraInfo                   info;
+	private final BlockingQueue<BufferedImage> imgQ = new LinkedBlockingQueue<>(Q_SIZE);
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(()->{
@@ -80,6 +85,7 @@ public class CameraSource extends AbstractFrameSource implements IVideoSource, I
 			if(dim.width > max.width && dim.height > max.height)
 				max = dim;
 		setSize(max.width, max.height);
+		cam.addWebcamListener(this);
 	}
 
 	@Override
@@ -91,20 +97,8 @@ public class CameraSource extends AbstractFrameSource implements IVideoSource, I
 	@Override
 	protected void run(IRenderTarget<?> target) throws RenderCommandException {
 		if(!(cam.isOpen())) return;
-		Dimension size       = cam.getViewSize();
-		RGB8Frame frame      = new RGB8Frame(size.width, size.height);
-		final ByteBuffer src = cam.getImageBytes();
-		final ByteBuffer dst = frame.pixels;
-		src.clear();
-		dst.clear();
-		final int rowLength = frame.width * frame.pixelSize;
-		for(int y = frame.height; --y >= 0;) {
-			src.position(y * rowLength);
-			src.limit(y * rowLength + rowLength);
-			dst.put(src);
-		}
 		try {
-			((IVideoRenderTarget)target).setFrame(this, new VideoFrame(frame));
+			((IVideoRenderTarget)target).setFrame(this, new VideoFrame(Frame.create(imgQ.take())));
 		} catch(Throwable t) {
 			throw new RenderCommandException(t);
 		}
@@ -118,11 +112,7 @@ public class CameraSource extends AbstractFrameSource implements IVideoSource, I
 
 	@Override
 	public float getFrameRate() {
-		try {
-			return Math.max(10.0f, ((Double)getFPS.invoke(cam)).floatValue());
-		} catch(Throwable t) {
-			return FRAMERATE_UNKNOWN;
-		}
+		return (float) cam.getFPS();
 	}
 
 	@Override
@@ -161,4 +151,24 @@ public class CameraSource extends AbstractFrameSource implements IVideoSource, I
 	public static CameraSource create(CameraInfo cameraInfo) {
 		return new CameraSource(cameraInfo);
 	}
+
+	@Override
+	public void webcamImageObtained(WebcamEvent event) {
+		try {
+			if(imgQ.size() == Q_SIZE) imgQ.poll();
+			imgQ.put(event.getImage());
+		} catch (Throwable t) {
+			log.severe(t);
+		}
+	}
+
+	@Override
+	public void webcamClosed(WebcamEvent arg0) {}
+
+	@Override
+	public void webcamDisposed(WebcamEvent arg0) {}
+
+
+	@Override
+	public void webcamOpen(WebcamEvent arg0) {}
 }
