@@ -38,20 +38,31 @@ import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.util.TextUtilities;
 
 public class FileFrameTarget extends AbstractVideoTarget {
-	private final File   file;
-	private final String ext;
+	private final String name;
+	private final String extU;
+	private final String extL;
+	private final File   path;
+	private       long   count;
 
 	public FileFrameTarget(File file) {
 		super(Thread.MIN_PRIORITY, AbstractVideoFX.FRAMEFX, false);
-		this.file = file;
-		this.ext  = TextUtilities.getFileExtensionWithoutDot(file.getName()).toUpperCase();
+		this.path = file.getParentFile();
+		this.name = TextUtilities.getFileNameWithoutExtension(file);
+		this.extU = TextUtilities.getFileExtensionWithoutDot(file.getName()).toUpperCase();
+		this.extL = TextUtilities.getFileExtensionWithoutDot(file.getName()).toLowerCase();
 	}
 
 	@Override
 	public void render() throws RenderCommandException {
+		if(count == 0) {
+			if(getVideoSource().getLengthInFrames() < 0)
+				count = 100000;
+			else
+				count = (long) Math.pow(10.0, Math.ceil(Math.log10(getVideoSource().getLengthInFrames())));
+		}
 		sleepUntil(getFrame().playOutTime);
 		try {
-			ImageIO.write(getFrame().getFrame().toBufferedImage(), ext, file);
+			ImageIO.write(getFrame().getFrame().toBufferedImage(), extU, new File(path, name + "_" + count + "." + extL));
 		} catch (Throwable e) {
 			throw new RenderCommandException(e);
 		}
