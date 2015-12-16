@@ -3,7 +3,7 @@ package ch.fhnw.ether.examples.video.fx;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.video.fx.IVideoGLFX;
 
-public class Crosshatch extends AbstractVideoFX implements IVideoGLFX {
+public class Crosshatching extends AbstractVideoFX implements IVideoGLFX {
 	@Override
 	public String mainFrag() {
 		return lines(

@@ -50,7 +50,7 @@ public class MotionBlur extends AbstractVideoFX implements IVideoFrameFX, IVideo
 	private VideoFrame[] vbuffer    = {DUMMY_FRAME, DUMMY_FRAME};
 	private int          vbufferIdx = 0;
 
-	protected MotionBlur() {
+	public MotionBlur() {
 		super(
 				NO_UNIFORMS,
 				NO_INOUT,

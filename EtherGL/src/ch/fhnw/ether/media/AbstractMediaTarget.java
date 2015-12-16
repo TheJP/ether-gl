@@ -157,7 +157,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 		sleepUntil(time, null);
 	}
 
-	protected void nap() {
+	public static void nap() {
 		try {
 			Thread.sleep(1);
 		} catch (Throwable t) {

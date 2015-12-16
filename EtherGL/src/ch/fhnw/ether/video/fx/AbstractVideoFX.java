@@ -432,7 +432,7 @@ public abstract class AbstractVideoFX extends AbstractRenderCommand<IVideoRender
 				"in vec2 vertexTexCoord;",
 				uniformsStr.toString(),
 				"out vec2 uv;",
-				outInStr.toString(),
+				outInStr.toString(), 
 				functionStr.toString(),
 				"void main() {",
 				main,

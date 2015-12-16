@@ -30,7 +30,6 @@
 package ch.fhnw.ether.examples.video.fx;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -48,6 +47,7 @@ import ch.fhnw.ether.image.RGB8Frame;
 import ch.fhnw.ether.media.AbstractFrameSource;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.media.RenderProgram;
+import ch.fhnw.ether.media.Sync;
 import ch.fhnw.ether.scene.DefaultScene;
 import ch.fhnw.ether.scene.IScene;
 import ch.fhnw.ether.scene.mesh.DefaultMesh;
@@ -74,7 +74,7 @@ import ch.fhnw.util.Log;
 import ch.fhnw.util.math.Mat4;
 
 public class SimplePlayerGL {
-	private static final float  SCALE  = 2.8f;
+	private static final float  SCALE  = 2.5f;
 	private static final Log    log    = Log.create();
 
 	public SimplePlayerGL(AbstractFrameSource source, IVideoSource mask) throws RenderCommandException {
@@ -83,7 +83,7 @@ public class SimplePlayerGL {
 
 		List<AbstractVideoFX> fxs = CollectionUtilities.asList(
 				new MotionBlur(),
-				new Crosshatch(),
+				new Crosshatching(),
 				new RGBGain(),
 				new RadialBlur(),
 				new FadeToColor(),
@@ -143,19 +143,19 @@ public class SimplePlayerGL {
 		});
 	}
 
-	public static void main(String[] args) throws IOException, RenderCommandException {
+	public static void main(String[] args) throws RenderCommandException {
 		AbstractFrameSource source;
-		if(args.length == 0)
-			source =  CameraSource.create(CameraInfo.getInfos()[0]);
-		else {
+		try {
 			try {
 				source = new URLVideoSource(new URL(args[0]));
 			} catch(MalformedURLException e) {
 				source = new URLVideoSource(new File(args[0]).toURI().toURL());
 			}
+		} catch(Throwable t) {
+			source =  CameraSource.create(CameraInfo.getInfos()[0]);
 		}
 		IVideoSource mask = null; 
-		try {mask = new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1));} catch(Throwable t) {}
+		try {mask = new ArrayVideoSource(new URLVideoSource(new File(args[1]).toURI().toURL(), 1), Sync.ASYNC);} catch(Throwable t) {}
 		new SimplePlayerGL(source, mask);
 	}
 }

@@ -97,12 +97,6 @@ public class Convolution extends AbstractVideoFX implements IVideoFrameFX, IVide
 				);
 	}
 
-	@Override
-	public void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target) {
-		setUniform("kernel",      KERNELS[(int) getVal(KERNEL)]);
-		setUniform("greyscale",   Boolean.valueOf(GREYSCALE[(int) getVal(KERNEL)])); 
-	}
-
 	public Convolution() {
 		super(
 				NO_UNIFORMS, 
@@ -140,6 +134,12 @@ public class Convolution extends AbstractVideoFX implements IVideoFrameFX, IVide
 				s * mat3.m12,
 				s * mat3.m22
 				);
+	}
+
+	@Override
+	public void processFrame(GL3 gl, double playOutTime, IVideoRenderTarget target) {
+		setUniform("kernel",      KERNELS[(int) getVal(KERNEL)]);
+		setUniform("greyscale",   Boolean.valueOf(GREYSCALE[(int) getVal(KERNEL)])); 
 	}
 
 	private float[][] outFrame = new float[1][1];

@@ -313,7 +313,6 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 			ByteBuffer dstBuffer = BufferUtilities.createDirectByteBuffer(w * h * 3);
 			flip(newPic.getByteBuffer(), dstBuffer, w, h);
 			result = new RGB8Frame(w, h, dstBuffer);
-
 			if(!(this.audioData.isEmpty())) {
 				while(audioData.size() > (2  * this.audioData.size()) + 128)
 					audioData.take();

@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.fhnw.ether.media.AbstractFrameSource;
+import ch.fhnw.ether.media.AbstractMediaTarget;
 import ch.fhnw.ether.media.IRenderTarget;
 import ch.fhnw.ether.media.IScheduler;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.media.RenderProgram;
+import ch.fhnw.ether.media.Sync;
 
 public class ArrayVideoSource extends AbstractFrameSource implements IVideoSource {
 	private final int              width;
@@ -25,13 +27,19 @@ public class ArrayVideoSource extends AbstractFrameSource implements IVideoSourc
 
 		@Override
 		public void render() throws RenderCommandException {
-			VideoFrame frame = getFrame();
-			frame.getFrame();
-			frames.add(frame);
+			synchronized (ArrayVideoSource.this) {
+				VideoFrame frame = getFrame();
+				frame.getFrame();
+				frames.add(frame);
+			}
 		}
 	}
 
 	public ArrayVideoSource(IVideoSource source) throws RenderCommandException {
+		this(source, Sync.SYNC);
+	}
+
+	public ArrayVideoSource(IVideoSource source, Sync sync) throws RenderCommandException {
 		if(source.getLengthInFrames() <= 0)
 			throw new RenderCommandException("Source '" + source + "' has an invalid frame count (" + source.getLengthInFrames() +")");
 		width           = source.getWidth();
@@ -43,9 +51,10 @@ public class ArrayVideoSource extends AbstractFrameSource implements IVideoSourc
 		Target t = new Target();
 		t.useProgram(new RenderProgram<>(source));
 		t.start();
-		t.sleepUntil(IScheduler.NOT_RENDERING);
-		t.stop();
-		frames.get(frames.size()-1).setLast(false);
+		if(sync == Sync.SYNC) {
+			t.sleepUntil(IScheduler.NOT_RENDERING);
+			t.stop();
+		}
 	}
 
 	@Override
@@ -76,15 +85,25 @@ public class ArrayVideoSource extends AbstractFrameSource implements IVideoSourc
 	@Override
 	protected void run(IRenderTarget<?> target) throws RenderCommandException {
 		if(frameIdx >= frames.size()) frameIdx = 0;
-		if(frameIdx == 0) {
-			double now = target.getTime();
-			int idx = 0;
-			for(VideoFrame f : frames) {
-				f.playOutTime = now + idx / getFrameRate();
-				idx++;
+		VideoFrame frame;
+		for(;;) {
+			synchronized (this) {
+				if(!(frames.isEmpty())) break;
 			}
+			AbstractMediaTarget.nap();
 		}
-		VideoFrame frame = frames.get(frameIdx);
+		synchronized (this) {
+			if(frameIdx == 0) {
+				double now = target.getTime();
+				int idx = 0;
+				for(VideoFrame f : frames) {
+					f.playOutTime = now + idx / getFrameRate();
+					idx++;
+				}
+			}
+			frame = frames.get(frameIdx);
+			frame.setLast(false);
+		}
 		((IVideoRenderTarget)target).setFrame(this, frame);
 		frameIdx++;
 	}
