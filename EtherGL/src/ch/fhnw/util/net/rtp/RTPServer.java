@@ -35,7 +35,7 @@ public class RTPServer extends Thread {
 	@Override
 	public void run() {
 		try(ServerSocket listenSocket = new ServerSocket(port)) {
-			System.out.println("# RTSPServer running " +contentBase(InetAddress.getLocalHost(), port)+ ":" + port);
+			System.out.println("# RTSPServer running " +contentBase(InetAddress.getLocalHost(), port));
 			for(;;)
 				new RTSPRequest(this, listenSocket.accept());
 		} catch (Exception e) {

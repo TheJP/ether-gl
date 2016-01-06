@@ -46,5 +46,4 @@ public class MinimalVideoPlayerRTP {
 		videoOut.start();
 		videoOut.sleepUntil(IScheduler.NOT_RENDERING);
 	}
-
 }
