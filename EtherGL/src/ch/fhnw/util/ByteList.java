@@ -178,5 +178,4 @@ public final class ByteList extends SimpleArrayList<byte[], Byte> {
 	protected void store(DataOutputStream out) throws IOException {
 		out.write(elementData);
 	}
-
 }

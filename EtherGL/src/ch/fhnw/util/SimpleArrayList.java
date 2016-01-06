@@ -266,6 +266,13 @@ public abstract class SimpleArrayList<AT, WT> implements RandomAccess, Cloneable
 		return numNew != 0;
 	}
 
+	public boolean addAll(AT src, int offset, int len) {
+		ensureCapacity(size + len);
+		System.arraycopy(src, offset, elementData, size, len);
+		size += len;
+		return len != 0;
+	}
+
 	/**
 	 * Inserts all of the elements in the specified collection into this list,
 	 * starting at the specified position. Shifts the element currently at that

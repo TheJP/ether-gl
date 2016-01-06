@@ -32,61 +32,82 @@ package ch.fhnw.util;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.EnumSet;
 
 public class Log implements Serializable {
-	enum Level {
+	public enum Level {
 		SEVERE, WARN, INFO,
 	}
+
+	private static final long    serialVersionUID = -4288206500724445427L;
+	public static  final Level[] ALL              = {Level.SEVERE, Level.WARN, Level.INFO};
 	
-	private static final long serialVersionUID = -4288206500724445427L;
-	private final transient PrintStream out = System.err;
-	private final transient String      id;  
-	
+	private final transient PrintStream    out = System.err;
+	private final transient String         id;  
+	private       transient EnumSet<Level> levels = EnumSet.allOf(Level.class);
+
 	private Log(String id) {
 		this.id = id;
 	}
-	
-	public static Log create() {
-		return new Log(ClassUtilities.getCallerClassName());
+
+	public static Log create(Level ... levels) {
+		Log result = new Log(ClassUtilities.getCallerClassName());
+		if(levels.length > 0)
+			result.setLevels(levels);
+		return result;
+	}
+
+	public void setLevels(Level ... levels) {
+		this.levels = EnumSet.noneOf(Level.class);
+		for(Level l : levels)
+			this.levels.add(l);
 	}
 
 	private String format(Level lvl, String msg) {
 		return new Date() + ":" + lvl.toString() + '(' + id + ')' + ':' + msg;
 	}
-	
+
 	public void info(String msg) {
+		if(!(levels.contains(Level.INFO))) return;
 		out.println(format(Level.INFO, msg));
 	}
 
 	public void info(String msg, Throwable t) {
+		if(!(levels.contains(Level.INFO))) return;
 		out.println(format(Level.INFO, msg));
 		t.printStackTrace(out);
 	}
 
 	public void warning(Throwable t) {
+		if(!(levels.contains(Level.WARN))) return;
 		out.print(format(Level.WARN, ClassUtilities.EMPTY_String));
 		t.printStackTrace(out);
 	}
 
 	public void warning(String msg) {
+		if(!(levels.contains(Level.WARN))) return;
 		out.println(format(Level.WARN, msg));
 	}
 
 	public void warning(String msg, Throwable t) {
+		if(!(levels.contains(Level.WARN))) return;
 		out.println(format(Level.WARN, msg));
 		t.printStackTrace(out);
 	}
 
 	public void severe(Throwable t) {
+		if(!(levels.contains(Level.SEVERE))) return;
 		out.println(format(Level.SEVERE, ClassUtilities.EMPTY_String));
 		t.printStackTrace(out);
 	}
-	
+
 	public void severe(String msg) {
+		if(!(levels.contains(Level.SEVERE))) return;
 		out.println(format(Level.SEVERE, msg));
 	}
 
 	public void severe(String msg, Throwable t) {
+		if(!(levels.contains(Level.SEVERE))) return;
 		out.println(format(Level.SEVERE, msg));
 		t.printStackTrace(out);
 	}

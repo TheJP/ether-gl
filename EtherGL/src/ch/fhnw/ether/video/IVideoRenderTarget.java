@@ -31,7 +31,10 @@ package ch.fhnw.ether.video;
 
 import ch.fhnw.ether.media.IRenderTarget;
 import ch.fhnw.ether.media.IScheduler;
+import ch.fhnw.ether.media.RenderCommandException;
+import ch.fhnw.ether.media.RenderProgram;
 
 public interface IVideoRenderTarget extends IRenderTarget<VideoFrame>, IScheduler {
 	IVideoSource getVideoSource();
+	void         useProgram(RenderProgram<IVideoRenderTarget> program) throws RenderCommandException;
 }

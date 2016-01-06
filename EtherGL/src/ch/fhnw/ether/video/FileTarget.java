@@ -37,14 +37,14 @@ import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.util.TextUtilities;
 
-public class FileFrameTarget extends AbstractVideoTarget {
+public class FileTarget extends AbstractVideoTarget {
 	private final String name;
 	private final String extU;
 	private final String extL;
 	private final File   path;
 	private       long   count;
 
-	public FileFrameTarget(File file) {
+	public FileTarget(File file) {
 		super(Thread.MIN_PRIORITY, AbstractVideoFX.FRAMEFX, false);
 		this.path = file.getParentFile();
 		this.name = TextUtilities.getFileNameWithoutExtension(file);
