@@ -36,7 +36,12 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-public final class AddressUtilities {
+public final class NetworkUtilities {
+	public static final int IPTOS_LOWCOST     = 0x02;
+	public static final int IPTOS_RELIABILITY = 0x04;
+	public static final int IPTOS_THROUGHPUT  = 0x08;
+	public static final int IPTOS_LOWDELAY    = 0x10;
+	
 	private static final int[][] PRIVATE_ADDRS = { { 10 }, { 192, 168 }, { 172, 16 }, { 172, 17 }, { 172, 18 }, { 172, 19 }, { 172, 20 }, { 172, 21 },
 			{ 172, 22 }, { 172, 23 }, { 172, 24 }, { 172, 25 }, { 172, 26 }, { 172, 27 }, { 172, 28 }, { 172, 29 }, { 172, 30 }, { 172, 31 }, };
 
@@ -48,7 +53,7 @@ public final class AddressUtilities {
 	}
 
 	private static InetAddress getFirstNonLoopbackAddress(boolean ipv4only) throws SocketException {
-		for (InetAddress addr : AddressUtilities.getLocalAddresses(ipv4only)) {
+		for (InetAddress addr : NetworkUtilities.getLocalAddresses(ipv4only)) {
 			if (!addr.isLoopbackAddress()) {
 				if (isPrivate(addr))
 					return addr;
@@ -60,7 +65,7 @@ public final class AddressUtilities {
 	private static InetAddress getLocalHost(boolean ipv4only) throws UnknownHostException, SocketException {
 		InetAddress result = InetAddress.getLocalHost();
 		if (ipv4only && !(result instanceof Inet4Address)) {
-			for (InetAddress addr : AddressUtilities.getLocalAddresses(true)) {
+			for (InetAddress addr : NetworkUtilities.getLocalAddresses(true)) {
 				if (isPrivate(addr)) {
 					result = addr;
 					break;

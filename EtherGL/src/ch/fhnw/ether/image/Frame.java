@@ -60,6 +60,8 @@ import ch.fhnw.ether.video.fx.AbstractVideoFX;
 import ch.fhnw.ether.view.gl.GLContextManager;
 import ch.fhnw.ether.view.gl.GLContextManager.IGLContext;
 import ch.fhnw.util.BufferUtilities;
+import ch.fhnw.util.ClassUtilities;
+import ch.fhnw.util.TextUtilities;
 
 public abstract class Frame extends AbstractVideoTarget {
 
@@ -119,7 +121,7 @@ public abstract class Frame extends AbstractVideoTarget {
 
 	@Override
 	public String toString() {
-		return getClass().getName() + ":" + width + "x" + height;
+		return TextUtilities.getShortClassName(this) + ":" + width + "x" + height;
 	}
 
 	protected void init(int width, int height) {

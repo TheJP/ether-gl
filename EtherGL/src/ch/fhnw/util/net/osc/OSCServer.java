@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
-import ch.fhnw.util.net.AddressUtilities;
+import ch.fhnw.util.net.NetworkUtilities;
 
 public final class OSCServer extends OSCDispatcher implements OSCSender {
 	private static final int RECEIVE_BUFFER_SIZE = 1024 * 1024;
@@ -66,7 +66,7 @@ public final class OSCServer extends OSCDispatcher implements OSCSender {
 	}
 
 	public OSCServer(int port, String multicastAddress) throws IOException {
-		address = new InetSocketAddress(AddressUtilities.getDefaultInterface(), port);
+		address = new InetSocketAddress(NetworkUtilities.getDefaultInterface(), port);
 		if (multicastAddress == null) {
 			socket = new DatagramSocket(address.getPort());
 		} else {

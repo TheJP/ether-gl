@@ -97,8 +97,8 @@ public class RTPmjpg {
 	 * @width: width of image in 8-pixel multiples
 	 * @height: height of image in 8-pixel multiples
 	 *
-	 * 0                   1                   2                   3
-	 * 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	 *  0                   1                   2                   3
+	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	 * | Type-specific |              Fragment Offset                  |
 	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -220,7 +220,8 @@ public class RTPmjpg {
 	private final BufferedImage img;
 	private final int           seqNb;
 	private final int           timestamp;
-
+	private int                 mtu = 1450;
+	
 	public RTPmjpg(BufferedImage img, int seqNb, int timestamp) {
 		quant          = DEFAULT_JPEG_QUANT;
 		type           = DEFAULT_JPEG_TYPE;
@@ -487,8 +488,7 @@ public class RTPmjpg {
 		return marker;
 	}
 
-	private static final int RTP_HEADER_LEN            = 12;
-	private static final int GST_RTP_BASE_PAYLOAD_MTU = 1024 * 63; // 1400;
+	private static final int RTP_HEADER_LEN           = 12;
 
 	List<RTPpacket> gst_rtp_jpeg_pay_handle_buffer(byte[] data, int size, int seqNb, int timestamp) {
 		List<RTPpacket> result = new ArrayList<>();
@@ -498,15 +498,12 @@ public class RTPmjpg {
 		byte[][] tables = new byte[15][];
 		CompInfo info[] = new CompInfo[3];
 		int quant_data_size;
-		int mtu;
 		int bytes_left;
 		int jpeg_header_size = 0;
 		int[] offset = new int[1];
 		boolean frame_done;
 		boolean sos_found, sof_found, dqt_found, dri_found;
 		int i;
-
-		mtu = GST_RTP_BASE_PAYLOAD_MTU;
 
 		log.info("got buffer size "+size);
 
@@ -580,7 +577,7 @@ public class RTPmjpg {
 			jpeg_header.q                = quant;
 			jpeg_header.width            = width;
 			jpeg_header.height           = height;
-			
+
 			/* collect the quant headers sizes */
 			quant_header.mbz = 0;
 			quant_header.precision = 0;
@@ -617,7 +614,7 @@ public class RTPmjpg {
 				bytes_left += restart_marker_header.sizeof();
 
 			frame_done = false;
-			do {
+			for(;;) {
 				ByteList payload;
 				int payload_size;
 				RTPpacket rtp = new RTPpacket(RTPpacket.MJPEG_TYPE, seqNb, timestamp);
@@ -666,6 +663,7 @@ public class RTPmjpg {
 				log.info("adding payload size "+ payload_size);
 				payload.addAll(data, 0, payload_size);
 				result.add(rtp);
+				if(frame_done) break;
 
 				bytes_left -= payload_size;
 				offset[0]  += payload_size;
@@ -679,8 +677,18 @@ public class RTPmjpg {
 		}
 	}
 
+	public void setMTU(int mtu) {
+		this.mtu = mtu;
+	}
+
+	// for testing
 	public static void main(String[] args) throws IOException {
 		log.setLevels(Log.ALL);
-		System.out.println(new RTPmjpg(new BufferedImage(64, 64, BufferedImage.TYPE_INT_RGB), 0, 0).createPackets());
+		BufferedImage img = new BufferedImage(500, 300, BufferedImage.TYPE_INT_RGB);
+		for(int y = img.getHeight(); --y >= 0;)
+			for(int x = img.getWidth(); --x >= 0;)
+				img.setRGB(x, y, (int) (Math.random() * Integer.MAX_VALUE));
+		for(RTPpacket p : new RTPmjpg(img, 1000, 2000).createPackets())
+			System.out.println(p);
 	}
 }

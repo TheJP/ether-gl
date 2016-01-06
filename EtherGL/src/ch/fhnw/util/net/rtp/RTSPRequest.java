@@ -12,11 +12,12 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import ch.fhnw.util.Log;
+import ch.fhnw.util.net.NetworkUtilities;
 
 public class RTSPRequest implements Runnable {
 	private final static Log log = Log.create();
 	final static int MJPEG_TIMEBASE = 90000;
-	
+
 	final static String CRLF = "\r\n";
 
 	//----------------
@@ -58,6 +59,11 @@ public class RTSPRequest implements Runnable {
 		this.localRTSPport = socket.getLocalPort();
 		RTPServer.log(this+"New client connection");
 
+		socket.setSendBufferSize(128 * 1024);
+		socket.setTcpNoDelay(true);
+		socket.setPerformancePreferences(0, 2, 1);
+		socket.setTrafficClass(NetworkUtilities.IPTOS_LOWDELAY | NetworkUtilities.IPTOS_THROUGHPUT);
+		
 		//Get Client IP address
 		clientIP = socketRTSP.getInetAddress();
 
@@ -85,7 +91,10 @@ public class RTSPRequest implements Runnable {
 						String line = readLine(in);
 						RTPServer.log(line);
 						if(line == null) break msg_loop;
-						if(line.length() == 0) break;
+						if(line.length() == 0) {
+							if(reqType == null) continue;
+							break;
+						}
 						StringTokenizer tokens = new StringTokenizer(line);
 						String key = tokens.nextToken();
 
@@ -187,7 +196,7 @@ public class RTSPRequest implements Runnable {
 
 		return header + content;
 	}
-	
+
 	private String reqTypes() {
 		String result = "";
 		for(REQType t : REQType.values()) {

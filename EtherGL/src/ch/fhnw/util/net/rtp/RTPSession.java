@@ -7,16 +7,22 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.Timer;
 
+import ch.fhnw.util.ClassUtilities;
 import ch.fhnw.util.Log;
+import ch.fhnw.util.TextUtilities;
+import ch.fhnw.util.net.NetworkUtilities;
 
 public class RTPSession implements ActionListener {
 	private static final Log log = Log.create();
 
 	private static final String CRLF = "\r\n";
+
+	private static final int FRAMERATE = 25; // fix for now
 
 	//rtsp states
 	enum State {
@@ -62,8 +68,8 @@ public class RTPSession implements ActionListener {
 		if(req.get("Transport:").contains("client_port=")) {
 			//init RTP and RTCP sockets
 			socketRTP  = new DatagramSocket();
-			socketRTP.setSendBufferSize(1024 * 63);
 			socketRTCP = new DatagramSocket();
+			socketRTP.setTrafficClass(NetworkUtilities.IPTOS_LOWDELAY | NetworkUtilities.IPTOS_THROUGHPUT);
 
 			//Send response
 			req.send(RTSP_setup(req, socketRTP.getLocalPort(), socketRTCP.getLocalPort()));
@@ -72,7 +78,7 @@ public class RTPSession implements ActionListener {
 		}
 
 		//init RTP sending Timer
-		timer = new Timer(40, this);
+		timer = new Timer(1000/FRAMERATE, this);
 		timer.setInitialDelay(0);
 		timer.setCoalesce(true);
 
@@ -110,7 +116,7 @@ public class RTPSession implements ActionListener {
 	//------------------------
 	class RTCPReceiver extends Thread {
 		private byte[]  rtcpBuf = new byte[512];
-		private boolean run = true;
+		private boolean run     = true;
 
 		public RTCPReceiver() {
 			super(RTCPReceiver.class.getName());
@@ -138,6 +144,12 @@ public class RTPSession implements ActionListener {
 		public void close() {
 			run = false;
 		}
+		
+		@Override
+		public String toString() {
+			return "#" + TextUtilities.getShortClassName(this);
+		}
+		
 	}
 
 	//------------------------
@@ -154,19 +166,19 @@ public class RTPSession implements ActionListener {
 			BufferedImage buf = server.getImage();
 
 			//Builds an RTPpackets object containing the frame
-			for(RTPpacket rtp_packet : new RTPmjpg(buf, imagenb, imagenb*(RTSPRequest.MJPEG_TIMEBASE/25)).createPackets()) {
+			RTPmjpg mjpg = new RTPmjpg(buf, imagenb, imagenb*(RTSPRequest.MJPEG_TIMEBASE/FRAMERATE));
+			if(socketRTP == null) mjpg.setMTU(63 * 1024);
+			List<RTPpacket> rtp_packets = mjpg.createPackets();
+			for(RTPpacket rtp_packet : rtp_packets) {
 				if(socketRTP != null) {
 					//send the packet as a DatagramPacket over the UDP socket 
 					senddp = new DatagramPacket(rtp_packet.getPacket(), rtp_packet.size(), clientIP, clientRTPport);
 					socketRTP.send(senddp);
-					//RTPServer.log(this + "Sent frame #" + imagenb + " to " + clientIP + ":" + clientRTPport);
-					// rtp_packet.printheader();
 				} else {
 					lastReq.send(clientRTPport, rtp_packet.getPacket());
-					//RTPServer.log(this + "Sent frame #" + imagenb + " to channel " + clientRTPport);
-					//rtp_packet.printheader();
 				}
 			}
+			//RTPServer.log(this + "Sent frame #" + imagenb + " as "+rtp_packets.size()+" packets to " + (socketRTP == null ? " channel " : clientIP + ":") + clientRTPport); 
 		}
 		catch(Throwable t) {
 			log.severe(t);

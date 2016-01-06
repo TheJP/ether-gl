@@ -64,7 +64,7 @@ public class RTPServer extends Thread {
 	}
 
 	public void setFrame(Frame frame) {
-		currentImage.set(ImageScaler.getScaledInstance(frame.toBufferedImage(), frame.width / 2, frame.height / 2, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, false));
+		currentImage.set(ImageScaler.getScaledInstance(frame.toBufferedImage(), frame.width, frame.height, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, false));
 	}
 
 	public BufferedImage getImage() {

@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import ch.fhnw.util.Log;
+import ch.fhnw.util.TextUtilities;
 
 public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRenderTarget<F>> implements IRenderTarget<F>, IScheduler {
 	private static final Log log = Log.create();
@@ -82,7 +83,7 @@ public abstract class AbstractMediaTarget<F extends AbstractFrame, T extends IRe
 					setRendering(false);
 					log.severe(e);
 				}
-			}, getClass().getName());
+			}, TextUtilities.getShortClassName(this));
 			framePump.setDaemon(true);
 			framePump.setPriority(priority);
 			framePump.start();

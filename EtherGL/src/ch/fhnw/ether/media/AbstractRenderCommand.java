@@ -31,6 +31,7 @@ package ch.fhnw.ether.media;
 
 import ch.fhnw.util.ClassUtilities;
 import ch.fhnw.util.IObjectID;
+import ch.fhnw.util.TextUtilities;
 
 public abstract class AbstractRenderCommand<T extends IRenderTarget<?>> implements IObjectID {
 	private final long id = ClassUtilities.createObjectID();
@@ -124,7 +125,7 @@ public abstract class AbstractRenderCommand<T extends IRenderTarget<?>> implemen
 
 	@Override
 	public String toString() {
-		return getClass().getName();
+		return TextUtilities.getShortClassName(this) ;
 	}
 
 	public void setEnable(boolean state) {
