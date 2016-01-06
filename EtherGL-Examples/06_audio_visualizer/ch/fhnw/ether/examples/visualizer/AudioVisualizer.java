@@ -43,14 +43,12 @@ import ch.fhnw.ether.audio.AudioUtilities.Window;
 import ch.fhnw.ether.audio.FFT;
 import ch.fhnw.ether.audio.IAudioRenderTarget;
 import ch.fhnw.ether.audio.IAudioSource;
-import ch.fhnw.ether.audio.InvFFT;
 import ch.fhnw.ether.audio.JavaSoundTarget;
 import ch.fhnw.ether.audio.URLAudioSource;
 import ch.fhnw.ether.audio.fx.AutoGain;
 import ch.fhnw.ether.audio.fx.BandsButterworth;
 import ch.fhnw.ether.audio.fx.DCRemove;
 import ch.fhnw.ether.audio.fx.PitchDetect;
-import ch.fhnw.ether.audio.fx.SinGen;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.media.RenderProgram;
 import ch.fhnw.ether.ui.ParameterWindow;
@@ -62,13 +60,13 @@ public class AudioVisualizer {
 	public static void main(String[] args) throws RenderCommandException, MalformedURLException, IOException {
 		IAudioSource                      src = new URLAudioSource(new File(args[0]).toURI().toURL());
 		//AbstractAudioSource<?>            src   = new SilenceAudioSource(1, 44100, 16);
-		SinGen                            sin   = new SinGen(0);
+		//SinGen                            sin   = new SinGen(0);
 		DCRemove                          dcrmv = new DCRemove();
 		AutoGain                          gain  = new AutoGain();
 		FFT                               fft   = new FFT(20, Window.HANN);
 		BandsButterworth                  bands = new BandsButterworth(40, 8000, 40, N_CUBES, 1);
 		PitchDetect                       pitch = new PitchDetect(fft, 2);
-		InvFFT                            ifft  = new InvFFT(fft);
+	//	InvFFT                            ifft  = new InvFFT(fft);
 
 		final JavaSoundTarget audioOut = new JavaSoundTarget();
 
