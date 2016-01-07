@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import ch.fhnw.util.Log;
+import ch.fhnw.util.TextUtilities;
 import ch.fhnw.util.net.NetworkUtilities;
 
 public class RTSPRequest implements Runnable {
@@ -23,6 +25,8 @@ public class RTSPRequest implements Runnable {
 	//----------------
 	//rtsp message types
 	enum REQType {
+		GET,
+		POST,
 		OPTIONS,
 		SETUP,
 		PLAY,
@@ -63,7 +67,7 @@ public class RTSPRequest implements Runnable {
 		socket.setTcpNoDelay(true);
 		socket.setPerformancePreferences(0, 2, 1);
 		socket.setTrafficClass(NetworkUtilities.IPTOS_LOWDELAY | NetworkUtilities.IPTOS_THROUGHPUT);
-		
+
 		//Get Client IP address
 		clientIP = socketRTSP.getInetAddress();
 
@@ -89,8 +93,8 @@ public class RTSPRequest implements Runnable {
 					for(;;) {
 						//parse request line and extract the request_type:
 						String line = readLine(in);
-						RTPServer.log(line);
 						if(line == null) break msg_loop;
+						RTPServer.log(line);
 						if(line.length() == 0) {
 							if(reqType == null) continue;
 							break;
@@ -127,6 +131,22 @@ public class RTSPRequest implements Runnable {
 					case DESCRIBE:
 						send(RTSP_describe());
 						break;
+					case GET:
+						if(get("Accept:").toLowerCase().equals("application/x-rtsp-tunnelled") && sessionCookie() != null) {
+							server.addChannel(sessionCookie(), this);
+							send(HTTP_ok());
+							break;
+						}
+						send(HTTP_bad_req());
+						break msg_loop;
+					case POST:
+						if(!(get("Content-Type:").toLowerCase().equals("application/x-rtsp-tunnelled"))) {
+							send(HTTP_bad_req());
+							break msg_loop;
+						}
+						in  = new DataInputStream(new Base64InputStream(in));
+						//in = new DataInputStream(Base64.getDecoder().wrap(in));
+						break;
 					default:
 						log.warning(this + "Unexpected request:" + request);
 						break;
@@ -137,13 +157,17 @@ public class RTSPRequest implements Runnable {
 		} catch(Throwable t) {
 			log.warning(toString(), t);
 		}
+		server.closeSession(getSessionKey());
+		log.info(this+"Connetion closed");
 	}
 
 	private String readLine(DataInputStream in) throws IOException, InterruptedException {
 		StringBuilder result = new StringBuilder();
 		for(;;) {
 			int ch = in.read();
-			if(ch == 0x24) {
+			if(ch < 0)   return null;
+			//System.err.print(ch < ' ' ? "<"+ch+">" : (char)ch); System.err.flush();
+			if(ch == '$') {
 				int channel = in.read();
 				int size    = in.readChar();
 				byte[] data = new byte[size];
@@ -153,23 +177,40 @@ public class RTSPRequest implements Runnable {
 					session.recv(channel, data);
 				continue;
 			}
-			if(ch < 0) return null;
 			else if(ch == '\r') continue;
 			else if(ch == '\n') return result.toString();
 			else result.append((char)ch);
 		}
 	}
 
+	private String sessionCookie() {
+		return get("x-sessioncookie:");
+	}
+
 	void send(String msg) throws IOException {
-		RTPServer.log(this + "Sent to Client:");
-		RTPServer.log(msg);
+		if(sessionCookie() != null) {
+			RTSPRequest req = server.getChannel(sessionCookie());
+			if(req != this) {
+				req.send(msg);
+				return;
+			}
+		}
 		synchronized (out) {
 			out.write(msg.getBytes());
 			out.flush();
 		}
+		RTPServer.log(this + "Sent to Client:");
+		RTPServer.log(msg);
 	}
 
 	void send(int channel, byte[] data) throws IOException {
+		if(sessionCookie() != null) {
+			RTSPRequest req = server.getChannel(sessionCookie());
+			if(req != this) {
+				req.send(channel, data);
+				return;
+			}
+		}
 		synchronized (out) {
 			out.write(0x24);
 			out.write(channel);
@@ -199,10 +240,8 @@ public class RTSPRequest implements Runnable {
 
 	private String reqTypes() {
 		String result = "";
-		for(REQType t : REQType.values()) {
-			if(t == REQType.OPTIONS) continue;
+		for(REQType t : REQType.values())
 			result += t.toString() + ", ";
-		}
 		return result.substring(0, result.length() - 2);
 	}
 
@@ -214,7 +253,8 @@ public class RTSPRequest implements Runnable {
 		return 
 				"RTSP/1.0 200 OK"+CRLF +
 				"CSeq: "+cSeq+CRLF +
-				"Public: "+reqTypes()+CRLF+CRLF;
+				"Public: "+reqTypes()+CRLF
+				+CRLF;
 	}
 
 	private String RTSP_describe() {
@@ -222,6 +262,27 @@ public class RTSPRequest implements Runnable {
 				"RTSP/1.0 200 OK"+CRLF +
 				"CSeq: "+cSeq+CRLF +
 				describe();
+	}
+
+	private String HTTP_ok() {
+		return 
+				"HTTP/1.0 200 OK"+CRLF +
+				"Date: "+TextUtilities.toGMTString(new Date())+CRLF +
+				"Cache-Control: no-store"+CRLF+
+				"Pragma: no-cache"+CRLF+
+				"Connection: close"+CRLF+
+				"Server: Ether-GL (Java)" +CRLF +
+				"Content-Type: application/x-rtsp-tunnelled"+CRLF+
+				CRLF;
+	}
+
+	private String HTTP_bad_req() {
+		return 
+				"HTTP/1.0 400 Bad Request"+CRLF +
+				"Date: "+TextUtilities.toGMTString(new Date())+CRLF +
+				"Server: Ether-GL (Java)" +CRLF +
+				"Connection: close"+CRLF+
+				CRLF;
 	}
 
 	public String get(String key) {

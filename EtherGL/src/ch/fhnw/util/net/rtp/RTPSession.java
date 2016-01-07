@@ -12,7 +12,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.Timer;
 
-import ch.fhnw.util.ClassUtilities;
 import ch.fhnw.util.Log;
 import ch.fhnw.util.TextUtilities;
 import ch.fhnw.util.net.NetworkUtilities;
@@ -91,7 +90,7 @@ public class RTPSession implements ActionListener {
 		String inter = "interleaved=";
 		String key   = t.contains(udp) ? udp : inter;
 		int start = t.indexOf(key);
-		if(start < 0) return -1;
+		if(start < 0) return channel;
 		int end = t.indexOf(start, ';');
 		if(end < 0) end = t.length();
 		String[] ports = t.substring(start+key.length(), end).split("-");
@@ -102,7 +101,7 @@ public class RTPSession implements ActionListener {
 		this.lastReq = req;
 		if(state == State.READY) {
 			//send back response
-			req.send(RTSP_response(req));
+			req.send(RTSP_ok(req));
 			//start timer
 			timer.start();
 			//update state
@@ -144,12 +143,12 @@ public class RTPSession implements ActionListener {
 		public void close() {
 			run = false;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "#" + TextUtilities.getShortClassName(this);
 		}
-		
+
 	}
 
 	//------------------------
@@ -191,7 +190,7 @@ public class RTPSession implements ActionListener {
 		this.lastReq = req;
 		if(state == State.PLAYING) {
 			//send back response
-			req.send(RTSP_response(req));
+			req.send(RTSP_ok(req));
 			//stop timer
 			timer.stop();
 			//update state
@@ -203,18 +202,11 @@ public class RTPSession implements ActionListener {
 	public void teardown(RTSPRequest req) throws IOException {
 		this.lastReq = req;
 		//send back response
-		req.send(RTSP_response(req));
-		//stop timer
-		timer.stop();
-		rtcpReceiver.close();
-		//close sockets
-		if(socketRTP != null)
-			socketRTP.close();
-		state = State.READY;
-		return;
+		req.send(RTSP_ok(req));
+		close();
 	}
 
-	private String RTSP_response(RTSPRequest req) {
+	private String RTSP_ok(RTSPRequest req) {
 		return
 				"RTSP/1.0 200 OK"+CRLF +
 				"CSeq: "+req.getCSeq()+CRLF +
@@ -249,5 +241,15 @@ public class RTPSession implements ActionListener {
 	public void recv(int channel, byte[] data) throws InterruptedException {
 		if(channel == clientRTPCport)
 			rtpcQ.put(new RTCPpacket(data, data.length));
+	}
+
+	public void close() {
+		//stop timer
+		timer.stop();
+		rtcpReceiver.close();
+		//close sockets
+		if(socketRTP != null)
+			socketRTP.close();
+		state = State.READY;
 	}
 }

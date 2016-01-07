@@ -15,7 +15,8 @@ import ch.fhnw.util.Log;
 public class RTPServer extends Thread {
 	private static final Log log = Log.create();
 	
-	private final Map<Integer, RTPSession> sessions = new ConcurrentHashMap<>();
+	private final Map<Integer, RTPSession>  sessions = new ConcurrentHashMap<>();
+	private final Map<String,  RTSPRequest> channels = new ConcurrentHashMap<>();
 		
 	private final AtomicReference<BufferedImage> currentImage = new AtomicReference<>(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
 	
@@ -47,6 +48,14 @@ public class RTPServer extends Thread {
 		return sessions.get(Integer.valueOf(req.getSessionKey()));
 	}
 
+	public void addChannel(String key, RTSPRequest channel) {
+		channels.put(key, channel);
+	}
+
+	public RTSPRequest getChannel(String key) {
+		return channels.get(key);
+	}
+	
 	static String contentBase(InetAddress addr, int port) {
 		return "rtsp://" + addr.getHostName() + ":" + port + "/video.mjpg";
 	}
@@ -69,5 +78,10 @@ public class RTPServer extends Thread {
 
 	public BufferedImage getImage() {
 		return currentImage.get();
+	}
+
+	public void closeSession(int sessionKey) {
+		RTPSession session = sessions.remove(Integer.valueOf(sessionKey));
+		if(session != null) session.close();
 	}
 }

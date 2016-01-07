@@ -104,6 +104,7 @@ public final class FloatList extends SimpleArrayList<float[], Float> {
 		return numNew != 0;		
 	}
 
+	@Override
 	public boolean addAll(float[] src, int off, int count) {
 		int numNew = count;
 		ensureCapacity(size + numNew);
