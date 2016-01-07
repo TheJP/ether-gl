@@ -12,7 +12,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.Timer;
 
-import ch.fhnw.util.ClassUtilities;
 import ch.fhnw.util.Log;
 import ch.fhnw.util.TextUtilities;
 import ch.fhnw.util.net.NetworkUtilities;

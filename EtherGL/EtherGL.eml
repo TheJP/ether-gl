@@ -42,12 +42,6 @@
 	<lib name="jogl-all-natives-linux-i586.jar" scope="COMPILE">
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/jogl/jogl-all-natives-linux-i586.jar!/"/>
 	</lib>
-	<lib name="jcodec-0.1.10.jar" scope="COMPILE">
-		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/jcodec/jcodec-0.1.10.jar!/"/>
-	</lib>
-	<lib name="webcam-capture-0.3.10-RC4.jar" scope="COMPILE">
-		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/webcam/webcam-capture-0.3.10-RC4.jar!/"/>
-	</lib>
 	<lib name="slf4j-api-1.7.2.jar" scope="COMPILE">
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/webcam/slf4j-api-1.7.2.jar!/"/>
 	</lib>
@@ -56,6 +50,13 @@
 	</lib>
 	<lib name="JTransforms-3.0.jar" scope="COMPILE">
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/jtransforms/JTransforms-3.0.jar!/"/>
+	</lib>
+	<lib name="jcodec-0.2.jar" scope="COMPILE">
+		<srcroot url="file:///jcodec/src/main/java"/>
+		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/jcodec/jcodec-0.2.jar!/"/>
+	</lib>
+	<lib name="webcam-capture-0.3.10.jar" scope="COMPILE">
+		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/webcam/webcam-capture-0.3.10.jar!/"/>
 	</lib>
 	<lib name="javalayer.jar" scope="COMPILE">
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/tritonus/javalayer.jar!/"/>
@@ -68,5 +69,8 @@
 	</lib>
 	<lib name="jaad-0.8.4.jar" scope="COMPILE">
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/jaad/jaad-0.8.4.jar!/"/>
+	</lib>
+	<lib name="xuggle-xuggler-5.4.jar" scope="COMPILE">
+		<relative-module-cls project-related="jar://$PROJECT_DIR$/../../git/ether-gl/EtherGL/lib/xuggle/xuggle-xuggler-5.4.jar!/"/>
 	</lib>
 </component>

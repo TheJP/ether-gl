@@ -87,7 +87,7 @@ final class Material {
 	}
 
 	public Texture getTexture() {
-		return texture.getTexture();
+		return texture != null ? texture.getTexture() : null;
 	}
 
 	public void setTexture(Frame texture) {
