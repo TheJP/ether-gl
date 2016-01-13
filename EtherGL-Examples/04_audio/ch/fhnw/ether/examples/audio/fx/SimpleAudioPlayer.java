@@ -37,13 +37,14 @@ import ch.fhnw.ether.audio.IAudioRenderTarget;
 import ch.fhnw.ether.audio.JavaSoundTarget;
 import ch.fhnw.ether.audio.URLAudioSource;
 import ch.fhnw.ether.audio.fx.AudioGain;
+import ch.fhnw.ether.media.IScheduler;
 import ch.fhnw.ether.media.RenderCommandException;
 import ch.fhnw.ether.media.RenderProgram;
 import ch.fhnw.ether.ui.ParameterWindow;
 
 
 public class SimpleAudioPlayer {
-	public static void main(String[] args) throws MalformedURLException, IOException, InterruptedException, RenderCommandException {
+	public static void main(String[] args) throws MalformedURLException, IOException, RenderCommandException {
 		URLAudioSource                    track   = new URLAudioSource(new File(args[0]).toURI().toURL());
 		AudioGain                         gain    = new AudioGain();
 		RenderProgram<IAudioRenderTarget> program = new RenderProgram<>(track, gain);
@@ -53,7 +54,7 @@ public class SimpleAudioPlayer {
 		JavaSoundTarget audioOut = new JavaSoundTarget();
 		audioOut.useProgram(program);
 		audioOut.start();
-		Thread.sleep(5 * 60 * 1000);
+		audioOut.sleepUntil(IScheduler.NOT_RENDERING);
 		audioOut.stop();
 	}
 }

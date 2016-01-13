@@ -97,8 +97,11 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	private void open(URLVideoSource src) throws IOException {
-		if (container.open(TextUtilities.toString(src.getURL()), IContainer.Type.READ, null) < 0)
-			throw new IOException("could not open " + src);
+		String urlStr = TextUtilities.toString(src.getURL());
+		if(urlStr.startsWith("file:///")) // fix file URL under windows
+			urlStr = urlStr.substring(8);
+		if (container.open(urlStr, IContainer.Type.READ, null) < 0)
+			throw new IOException("could not open " + urlStr);
 
 		// query how many streams the call to open found
 		int numStreams = container.getNumStreams();
