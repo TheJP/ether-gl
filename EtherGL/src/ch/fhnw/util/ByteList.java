@@ -184,5 +184,6 @@ public final class ByteList extends SimpleArrayList<byte[], Byte> {
 
 	public void readFully(InputStream in) throws IOException {
 		addAll(IOUtils.toByteArray(in));
+		in.close();
 	}
 }
