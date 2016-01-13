@@ -39,7 +39,6 @@ public class VideoFrame extends AbstractFrame {
 	private final FrameAccess            framea;
 	private       Frame                  frame;
 	private       Texture                texture;
-	private       boolean                frameRead;
 	private final BlockingQueue<float[]> audioData;
 
 	public VideoFrame(Frame frame) {
@@ -61,23 +60,10 @@ public class VideoFrame extends AbstractFrame {
 			if(texture != null) {
 				frame = Frame.create(texture);
 			} else {
-				frameRead = true;
 				frame = framea.getFrame(audioData);
 			}
 		}
 		return frame;
-	}
-
-	public synchronized void skip() {
-		if(!(frameRead)) {
-			framea.skipFrame();
-			frameRead = true;
-		}
-	}
-
-	@Override
-	public synchronized void dispose() {
-		skip();
 	}
 
 	public synchronized Texture getTexture() {
@@ -85,7 +71,6 @@ public class VideoFrame extends AbstractFrame {
 			if(frame != null) {
 				setTexture(frame.getTexture());
 			} else {
-				frameRead = true;
 				setTexture(framea.getTexture(audioData));
 			}
 		}

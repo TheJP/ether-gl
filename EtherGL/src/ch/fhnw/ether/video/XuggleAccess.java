@@ -159,6 +159,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 		decoderThread.start();
 	}
 
+	@Override
 	public void dispose() {
 		container.close();
 	}
@@ -282,11 +283,6 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 		} catch (Throwable t) {
 			return false;
 		}
-	}
-
-	@Override
-	protected boolean skipFrame() {
-		return decodeFrame();
 	}
 
 	IVideoPicture tmpPicture;

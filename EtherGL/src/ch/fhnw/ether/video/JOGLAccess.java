@@ -61,6 +61,7 @@ public final class JOGLAccess extends FrameAccess {
 		}
 	}
 
+	@Override
 	public void dispose() {
 		try(IGLContext ctx = GLContextManager.acquireContext()) {
 			player.destroy(ctx.getGL());
@@ -102,12 +103,6 @@ public final class JOGLAccess extends FrameAccess {
 	public void rewind() {
 		numPlays--;
 		player.seek(0);
-	}
-
-	@Override
-	protected boolean skipFrame() {
-		player.seek((int)(player.getVideoPTS() + (1000 / player.getFramerate())));
-		return true;
 	}
 
 	@Override

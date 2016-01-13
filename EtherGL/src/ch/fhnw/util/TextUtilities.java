@@ -523,10 +523,10 @@ public final class TextUtilities {
 		return cleanForPath(path).equals(path);
 	}
 
-	public static String stripFileExtension(String name) {
-		if(name == null) return null;
-		int idx = name.lastIndexOf('.');
-		return idx > 0 ? name.substring(0, idx) : name;
+	public static String stripFileExtension(String path) {
+		if(path == null) return null;
+		int idx = path.lastIndexOf('.');
+		return idx > 0 ? path.substring(0, idx) : path;
 	}
 
 	public static String getFileName(String path) {

@@ -7,11 +7,12 @@ import ch.fhnw.ether.image.Frame;
 import ch.fhnw.ether.media.AbstractFrameSource;
 import ch.fhnw.ether.media.IScheduler;
 import ch.fhnw.ether.scene.mesh.material.Texture;
+import ch.fhnw.util.IDisposable;
 
-public class FrameAccess {
+public class FrameAccess implements IDisposable {
 	protected final URLVideoSource src;
 	protected int                  numPlays;
-	private final Frame            frame;
+	private         Frame          frame;
 
 	FrameAccess(URLVideoSource src) throws IOException {
 		this.frame    = Frame.create(src.getURL());
@@ -30,8 +31,6 @@ public class FrameAccess {
 		this.src      = src;
 		this.numPlays = numPlays;
 	}
-
-	protected boolean skipFrame() {return false;}
 
 	protected Frame getFrame(BlockingQueue<float[]> audioData) {
 		return frame;
@@ -80,5 +79,10 @@ public class FrameAccess {
 
 	public boolean isKeyframe() {
 		return true;
+	}
+
+	@Override
+	public void dispose() {
+		frame = null; // help GC
 	}
 }

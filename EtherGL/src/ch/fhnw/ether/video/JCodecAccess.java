@@ -60,6 +60,7 @@ public final class JCodecAccess extends FrameAccess {
 		}
 	}
 
+	@Override
 	public void dispose() {
 		try {
 			channel.close();
@@ -107,23 +108,6 @@ public final class JCodecAccess extends FrameAccess {
 		} catch (Throwable t) {
 			log.warning(t);
 		}
-	}
-
-
-	@Override
-	protected boolean skipFrame() {
-		boolean result = false;
-		try {
-			result = grab.skipFrame();
-		} catch(Throwable t) {
-			rewind();
-			try {
-				result = grab.skipFrame();
-			} catch(Throwable t0) {}
-		}
-		if(!(result))
-			numPlays--;
-		return result;
 	}
 
 	static final int ATTR_PLAYOUT_TIME = 0;
