@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+import org.jcodec.common.IOUtils;
+
 
 
 public final class ByteList extends SimpleArrayList<byte[], Byte> {
@@ -181,12 +183,6 @@ public final class ByteList extends SimpleArrayList<byte[], Byte> {
 	}
 
 	public void readFully(InputStream in) throws IOException {
-		ensureCapacity(4096);
-		// TODO: optimize this (read blockwise)
-		for(;;) {
-			int c = in.read();
-			if(c < 0) return;
-			add((byte)c);
-		}
+		addAll(IOUtils.toByteArray(in));
 	}
 }

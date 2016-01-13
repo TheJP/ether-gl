@@ -144,8 +144,32 @@ public class URLAudioSource extends AbstractFrameSource implements Runnable, IDi
 		rewind();
 	}
 
-	public static AudioInputStream getStream(URL url) throws UnsupportedAudioFileException, IOException {
-		return getStream(url.openStream());
+	public static AudioInputStream getStream(URL url) throws UnsupportedAudioFileException {
+		List<AudioFileReader> providers = getAudioFileReaders();
+		AudioInputStream result = null;
+		
+		for(int i = 0; i < providers.size(); i++) {
+			AudioFileReader reader = providers.get(i);
+			try {
+				result = reader.getAudioInputStream(url);
+				break;
+			} catch (UnsupportedAudioFileException e) {
+				continue;
+			} catch(IOException e) {
+				continue;
+			}
+		}
+
+		if( result==null ) {
+			throw new UnsupportedAudioFileException("could not get audio input stream from input URL");
+		}
+
+		AudioFormat format = result.getFormat();
+		if(format.getEncoding() != Encoding.PCM_SIGNED || format.getSampleSizeInBits() < 0) {
+			AudioFormat fmt = new AudioFormat(Encoding.PCM_SIGNED, format.getSampleRate(), 16, format.getChannels(), format.getChannels() * 2, format.getSampleRate(), false);
+			return AudioSystem.getAudioInputStream(fmt, result);
+		}
+		return result;
 	}
 
 	public static AudioInputStream getStream(InputStream stream) throws UnsupportedAudioFileException, IOException {
