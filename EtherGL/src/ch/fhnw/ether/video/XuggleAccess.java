@@ -99,7 +99,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	private void open(URLVideoSource src) throws IOException {
 		String urlStr = TextUtilities.toString(src.getURL());
 		if(urlStr.startsWith("file:///")) // fix file URL under windows
-			urlStr = urlStr.substring(8);
+			urlStr = TextUtilities.urlDecodeUTF8(urlStr).substring(8);
 		if (container.open(urlStr, IContainer.Type.READ, null) < 0)
 			throw new IOException("could not open " + urlStr);
 
