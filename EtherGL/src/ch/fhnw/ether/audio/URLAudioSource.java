@@ -141,7 +141,7 @@ public class URLAudioSource extends AbstractFrameSource implements Runnable, IDi
 		rewind();
 	}
 
-	private AudioInputStream getStream(URL url) throws UnsupportedAudioFileException {
+	public static AudioInputStream getStream(URL url) throws UnsupportedAudioFileException {
 		List<AudioFileReader> providers = getAudioFileReaders();
 		AudioInputStream result = null;
 
@@ -170,7 +170,7 @@ public class URLAudioSource extends AbstractFrameSource implements Runnable, IDi
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<AudioFileReader> getAudioFileReaders() {
+	private static List<AudioFileReader> getAudioFileReaders() {
 		try {
 			return (List<AudioFileReader>) ClassUtilities.getMethod(AudioSystem.class, "getAudioFileReaders").invoke(null);
 		} catch (Throwable t) {
