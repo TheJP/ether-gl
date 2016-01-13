@@ -32,6 +32,7 @@ package ch.fhnw.util;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
@@ -177,5 +178,15 @@ public final class ByteList extends SimpleArrayList<byte[], Byte> {
 	@Override
 	protected void store(DataOutputStream out) throws IOException {
 		out.write(elementData);
+	}
+
+	public void readFully(InputStream in) throws IOException {
+		ensureCapacity(4096);
+		// TODO: optimize this (read blockwise)
+		for(;;) {
+			int c = in.read();
+			if(c < 0) return;
+			add((byte)c);
+		}
 	}
 }
