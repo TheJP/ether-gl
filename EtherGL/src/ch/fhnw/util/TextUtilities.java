@@ -34,6 +34,7 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -399,7 +400,7 @@ public final class TextUtilities {
 			return s;
 		}
 	}
-
+	
 	public static String[] split(String str, char splitchar) {
 		if(str          == null) return ClassUtilities.EMPTY_StringA;
 		if(str.length() == 0)    return new String[] {ClassUtilities.EMPTY_String};
@@ -617,6 +618,12 @@ public final class TextUtilities {
 	}
 
 	public static String toString(Object o) {
+		if(o instanceof URL) {
+			String result = ((URL)o).toExternalForm();
+			if(result.startsWith("file:/") && result.charAt(6) != '/')
+				result = result.replace("file:/", "file:///");
+			return result;
+		}
 		return toString("[", ", ", "]", o);
 	}
 

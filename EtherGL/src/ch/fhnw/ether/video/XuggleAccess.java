@@ -61,6 +61,7 @@ import ch.fhnw.ether.scene.mesh.material.Texture;
 import ch.fhnw.util.BufferUtilities;
 import ch.fhnw.util.Log;
 import ch.fhnw.util.SortedLongMap;
+import ch.fhnw.util.TextUtilities;
 
 public final class XuggleAccess extends FrameAccess implements Runnable {
 	private static final Log log = Log.create();
@@ -96,7 +97,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	private void open(URLVideoSource src) throws IOException {
-		if (container.open(src.getURL().toExternalForm(), IContainer.Type.READ, null) < 0)
+		if (container.open(TextUtilities.toString(src.getURL()), IContainer.Type.READ, null) < 0)
 			throw new IOException("could not open " + src);
 
 		// query how many streams the call to open found
