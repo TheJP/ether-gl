@@ -29,7 +29,9 @@
 
 package ch.fhnw.ether.video;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -88,7 +90,7 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 	private       Semaphore                       queueSize      = new Semaphore(QUEUE_SZ);
 	private       int                             width;
 	private       int                             height;
-	
+
 	public XuggleAccess(URLVideoSource src, int numPlays) throws IOException {
 		super(src, numPlays);
 		container = IContainer.make();
@@ -97,12 +99,19 @@ public final class XuggleAccess extends FrameAccess implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	private void open(URLVideoSource src) throws IOException {
-		String urlStr = TextUtilities.toString(src.getURL());
-		if(urlStr.startsWith("file:///")) // fix file URL under windows
-			urlStr = TextUtilities.urlDecodeUTF8(urlStr).substring(8);
-		if (container.open(urlStr, IContainer.Type.READ, null) < 0)
-			throw new IOException("could not open " + urlStr);
-
+		try {
+			if("file".equals(src.getURL().getProtocol())) {
+				File f = new File(src.getURL().toURI());
+				if (container.open(f.getAbsolutePath(), IContainer.Type.READ, null) < 0)
+					throw new IOException("could not open " + f.getAbsolutePath());
+			} else {
+				String urlStr = TextUtilities.toString(src.getURL());
+				if (container.open(urlStr, IContainer.Type.READ, null) < 0)
+					throw new IOException("could not open " + urlStr);
+			}
+		} catch(URISyntaxException e) {
+			throw new IOException(e);
+		}
 		// query how many streams the call to open found
 		int numStreams = container.getNumStreams();
 		// and iterate through the streams to find the first audio stream

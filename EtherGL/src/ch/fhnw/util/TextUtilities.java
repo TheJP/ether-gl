@@ -619,7 +619,7 @@ public final class TextUtilities {
 
 	public static String toString(Object o) {
 		if(o instanceof URL) {
-			String result = ((URL)o).toExternalForm();
+			String result = urlDecodeUTF8(((URL)o).toExternalForm());
 			if(result.startsWith("file:/") && result.charAt(6) != '/')
 				result = result.replace("file:/", "file:///");
 			return result;
