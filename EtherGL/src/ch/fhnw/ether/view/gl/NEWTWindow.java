@@ -186,4 +186,14 @@ final class NEWTWindow implements IWindow {
 	public void display(GLRunnable runnable) {
 		window.invoke(false, runnable);
 	}
+
+	@Override
+	public String getTitle() {
+		return window.getTitle();
+	}
+
+	@Override
+	public void setTitle(String title) {
+		window.setTitle(title);
+	}
 }

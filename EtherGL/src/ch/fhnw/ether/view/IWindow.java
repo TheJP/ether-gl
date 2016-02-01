@@ -61,4 +61,16 @@ public interface IWindow {
 	 * Display (i.e. render) this view. Must be run from render thread.
 	 */
 	void display(GLRunnable runnable);
+
+	/**
+	 * Returns the title, which is currently displayed for this window.
+	 * @return
+	 */
+	String getTitle();
+
+	/**
+	 * Changes the title of this window to the given string.
+	 * @param title New window title.
+	 */
+	void setTitle(String title);
 }
